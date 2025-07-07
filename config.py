@@ -86,6 +86,25 @@ STATUS_GOSB_PLACE = {
     "val_down":     "Rang GOSB DOWN"
 }
 
+# СТАТУСЫ ДЛЯ КАТЕГОРИЙ (Краткие переводы на английский)
+CATEGORY_RANK_MAP = {
+    "Вы в лидерах": 1,      # Winner
+    "Серебро": 2,           # Silver
+    "Бронза": 3,            # Bronze
+    "Нужно поднажать": 4,   # OutOfPrize
+    "": 4,                  # Empty == OutOfPrize
+    None: 4                 # None == OutOfPrize
+}
+STATUS_RATING_CATEGORY = {
+    "in2prize": "ENTERED_PRIZE",             # ПОПАЛ В ПРИЗЕРЫ
+    "stay_out": "STAYED_OUT",                # ОСТАЛСЯ ВНЕ ПРИЗЕРОВ
+    "from2out": "DROPPED_OUT_PRIZE",         # ВЫБЫЛ ИЗ ПРИЗЕРОВ
+    "lost":     "LOST_VIEW",                 # ПРОПАЛ ИЗ ВИДА
+    "same":     "PRIZE_UNCHANGED",           # ПРИЗЕР БЕЗ ИЗМЕНЕНИЙ
+    "up":       "PRIZE_UP",                  # УЛУЧШИЛ ПРИЗОВОЕ МЕСТО
+    "down":     "PRIZE_DOWN",                # ПОНИЗИЛСЯ В РЕЙТИНГЕ ПРИЗЕРОВ
+}
+
 # Цвета для Excel-раскраски статусов
 COMPARE_STATUS_COLORS = {
     'No Change':        '#BFBFBF',  # Серый
@@ -104,10 +123,19 @@ COMPARE_STATUS_COLORS = {
     'Rang BANK NEW':    '#E2EFDA',
     'Rang TB NEW':      '#E2EFDA',
     'Rang GOSB NEW':    '#E2EFDA',
-    'Remove FROM':      '#A6A6A6',  # Темно-серый
-    'Rang BANK REMOVE': '#A6A6A6',
-    'Rang TB REMOVE':   '#A6A6A6',
-    'Rang GOSB REMOVE': '#A6A6A6',
-    'Remove':           '#A6A6A6',
+    'Remove FROM':      '#383838',  # Темно-серый, ещё темнее
+    'Rang BANK REMOVE': '#383838',
+    'Rang TB REMOVE':   '#383838',
+    'Rang GOSB REMOVE': '#383838',
+    'Remove':           '#383838',
     'New':              '#E2EFDA',
+
+    # Новые для категорий (раскраска строго по вашей схеме)
+    "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
+    "STAYED_OUT":       '#BFBFBF',   # Серый (остался вне призёров)
+    "DROPPED_OUT_PRIZE":'#FF0000',   # Красный (выбыл из призёров)
+    "LOST_VIEW":        '#383838',   # Темно-серый (пропал из вида)
+    "PRIZE_UNCHANGED":  '#C6EFCE',   # Светло-зелёный (призёр без изменений)
+    "PRIZE_UP":         '#00B050',   # Зеленый (улучшил место)
+    "PRIZE_DOWN":       '#FFC7CE',   # Светло-красный (понизился)
 }

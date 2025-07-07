@@ -144,7 +144,10 @@ def main():
                 'indicatorValue_Compare',
                 'divisionRatings_BANK_placeInRating_Compare',
                 'divisionRatings_TB_placeInRating_Compare',
-                'divisionRatings_GOSB_placeInRating_Compare'
+                'divisionRatings_GOSB_placeInRating_Compare',
+                'divisionRatings_BANK_ratingCategoryName_Compare',
+                'divisionRatings_TB_ratingCategoryName_Compare',
+                'divisionRatings_GOSB_ratingCategoryName_Compare'
             ]
         )
         logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")

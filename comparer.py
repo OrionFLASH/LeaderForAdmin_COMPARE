@@ -3,7 +3,8 @@ import logging
 from config import (
     COMPARE_KEYS, COMPARE_FIELDS,
     STATUS_NEW_REMOVE, STATUS_INDICATOR,
-    STATUS_BANK_PLACE, STATUS_TB_PLACE, STATUS_GOSB_PLACE
+    STATUS_BANK_PLACE, STATUS_TB_PLACE, STATUS_GOSB_PLACE,
+    STATUS_RATING_CATEGORY, CATEGORY_RANK_MAP
 )
 
 def make_compare_sheet(df_before, df_after, sheet_name):
@@ -78,11 +79,58 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         compare_df['divisionRatings_GOSB_placeInRating_Compare'] = compare_df.apply(
             lambda row: rang_compare(row, 'divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating', STATUS_GOSB_PLACE), axis=1)
 
+        # ratingCategoryName сравнение
+        def category_rank(cat):
+            return CATEGORY_RANK_MAP.get(cat, 4)  # если неизвестно — вне призовых
+
+        def category_compare(before_cat, after_cat):
+            b_rank = category_rank(before_cat)
+            a_rank = category_rank(after_cat)
+            # переводим статус согласно правилам пользователя:
+            # 1) Не был в призовых или не было вообще, но попал в призовые - "ENTERED_PRIZE"
+            if b_rank == 4 and a_rank < 4:
+                return STATUS_RATING_CATEGORY["in2prize"]
+            # 2) Не был в призовых - остался вне призовых - "STAYED_OUT"
+            if b_rank == 4 and a_rank == 4:
+                return STATUS_RATING_CATEGORY["stay_out"]
+            # 3) Был в призовых - попал в "нужно поднажать" - "DROPPED_OUT_PRIZE"
+            if b_rank < 4 and a_rank == 4:
+                return STATUS_RATING_CATEGORY["from2out"]
+            # 4) Был в призовых - нет в новом файле - "LOST_VIEW"
+            if b_rank < 4 and (after_cat is None or after_cat == ""):
+                return STATUS_RATING_CATEGORY["lost"]
+            # 5) Призовое место не изменилось - "PRIZE_UNCHANGED"
+            if b_rank == a_rank and b_rank < 4:
+                return STATUS_RATING_CATEGORY["same"]
+            # 6) Призовое место улучшилось - "PRIZE_UP"
+            if b_rank > a_rank and a_rank < 4:
+                return STATUS_RATING_CATEGORY["up"]
+            # 7) Призовое место снизилось - "PRIZE_DOWN"
+            if b_rank < a_rank and a_rank < 4:
+                return STATUS_RATING_CATEGORY["down"]
+            # Если ничего не подошло
+            return ""
+
+        # Для каждой категории делаем отдельное поле
+        for group, col in [
+            ('BANK',   'divisionRatings_BANK_ratingCategoryName'),
+            ('TB',     'divisionRatings_TB_ratingCategoryName'),
+            ('GOSB',   'divisionRatings_GOSB_ratingCategoryName'),
+        ]:
+            def cmp_func(row, col=col):
+                before_cat = row.get(f'BEFORE_{col}', None)
+                after_cat  = row.get(f'AFTER_{col}', None)
+                return category_compare(before_cat, after_cat)
+            compare_df[f"{col}_Compare"] = compare_df.apply(cmp_func, axis=1)
+
         final_cols = COMPARE_KEYS + [
             'New_Remove', 'indicatorValue_Compare',
             'divisionRatings_BANK_placeInRating_Compare',
             'divisionRatings_TB_placeInRating_Compare',
-            'divisionRatings_GOSB_placeInRating_Compare'
+            'divisionRatings_GOSB_placeInRating_Compare',
+            'divisionRatings_BANK_ratingCategoryName_Compare',
+            'divisionRatings_TB_ratingCategoryName_Compare',
+            'divisionRatings_GOSB_ratingCategoryName_Compare'
         ] + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
         compare_df = compare_df.reindex(columns=final_cols)
         logging.info(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
