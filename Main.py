@@ -270,7 +270,7 @@ if __name__ == "__main__":
     main(
         source_dir="//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON",
         target_dir="//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX",
-        before_filename="LFA_0.json",
-        after_filename="LFA_4.json",
+        before_filename="LFA_5.json",
+        after_filename="LFA_6.json",
         result_excel="LFA_COMPARE.xlsx"
     )
