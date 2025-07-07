@@ -1,6 +1,7 @@
 from config import (
     SOURCE_DIR, TARGET_DIR, BEFORE_FILENAME, AFTER_FILENAME,
-    RESULT_EXCEL, PRIORITY_COLS, COMPARE_STATUS_COLORS, LOG_BASENAME, LOG_DIR
+    RESULT_EXCEL, PRIORITY_COLS, LOG_BASENAME, LOG_DIR,
+    STATUS_COLORS_DICT, STATUS_COLOR_COLUMNS, STATUS_RU_DICT, STATUS_RATING_CATEGORY
 )
 from logging_utils import setup_logger
 from json_loader import process_json_file
@@ -32,22 +33,30 @@ def add_smart_table(writer, df, sheet_name, table_name):
 
 def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns):
     worksheet = writer.sheets[sheet_name]
+    dark_bg = {"#383838", "#222222"}
+    # Собираем статусы, которым нужен белый шрифт
+    statuses_with_white_font = set()
+    for status, color in status_color_map.items():
+        if color.lower() in dark_bg:
+            statuses_with_white_font.add(status)
     for col_name in status_columns:
         if col_name not in df.columns:
             continue
         col_idx = df.columns.get_loc(col_name)
-        # Excel: A, B, ..., Z, AA, AB, ... (корректно до 52 колонок, больше — расширить)
         if col_idx < 26:
             col_letter = chr(65 + col_idx)
         else:
             col_letter = chr(65 + col_idx // 26 - 1) + chr(65 + col_idx % 26)
         cell_range = f"{col_letter}2:{col_letter}{len(df)+1}"
         for status, color in status_color_map.items():
+            fmt = writer.book.add_format({'bg_color': color})
+            if status in statuses_with_white_font:
+                fmt.set_font_color("#FFFFFF")
             worksheet.conditional_format(cell_range, {
                 'type':     'text',
                 'criteria': 'containing',
                 'value':    status,
-                'format':   writer.book.add_format({'bg_color': color})
+                'format':   fmt
             })
 
 def log_data_stats(df, label):
@@ -71,13 +80,38 @@ def log_compare_stats(compare_df):
     import logging
     n_rows = len(compare_df)
     logging.info(f"[COMPARE] Строк всего: {n_rows}")
-    for col in ['New_Remove', 'indicatorValue_Compare',
-                'divisionRatings_BANK_placeInRating_Compare',
-                'divisionRatings_TB_placeInRating_Compare',
-                'divisionRatings_GOSB_placeInRating_Compare']:
+    for col in STATUS_COLOR_COLUMNS:
         if col in compare_df.columns:
             counts = compare_df[col].value_counts(dropna=False).to_dict()
             logging.info(f"[COMPARE] {col}: {counts}")
+
+def add_status_legend(writer, status_colors, status_ru_dict, status_rating_category, sheet_name="STATUS_LEGEND"):
+    """
+    Добавляет лист Excel с легендой по статусам.
+    """
+    rows = []
+    for key, eng_status in status_rating_category.items():
+        ru, comment = status_ru_dict.get(eng_status, ("", ""))
+        color = status_colors.get(eng_status, "#FFFFFF")
+        rows.append({
+            "Status code": eng_status,
+            "Статус (рус)": ru,
+            "Excel fill color": color,
+            "Комментарий": comment
+        })
+    legend_df = pd.DataFrame(rows)
+    legend_df = legend_df[["Status code", "Статус (рус)", "Excel fill color", "Комментарий"]]
+    legend_df.to_excel(writer, index=False, sheet_name=sheet_name)
+    worksheet = writer.sheets[sheet_name]
+    for i, row in legend_df.iterrows():
+        fmt = writer.book.add_format({'bg_color': row["Excel fill color"]})
+        # Белый шрифт для темного
+        if row["Excel fill color"].lower() == "#383838":
+            fmt.set_font_color("#FFFFFF")
+        worksheet.write(i+1, 0, row["Status code"])
+        worksheet.write(i+1, 1, row["Статус (рус)"])
+        worksheet.write(i+1, 2, row["Excel fill color"], fmt)
+        worksheet.write(i+1, 3, row["Комментарий"])
 
 def main():
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
@@ -118,7 +152,6 @@ def main():
         df_before, df_after, sheet_compare
     )
 
-    # Статистика сравнения COMPARE
     log_compare_stats(compare_df)
 
     base, ext = os.path.splitext(RESULT_EXCEL)
@@ -139,17 +172,10 @@ def main():
             writer,
             compare_df,
             sheet_compare,
-            COMPARE_STATUS_COLORS,
-            [
-                'indicatorValue_Compare',
-                'divisionRatings_BANK_placeInRating_Compare',
-                'divisionRatings_TB_placeInRating_Compare',
-                'divisionRatings_GOSB_placeInRating_Compare',
-                'divisionRatings_BANK_ratingCategoryName_Compare',
-                'divisionRatings_TB_ratingCategoryName_Compare',
-                'divisionRatings_GOSB_ratingCategoryName_Compare'
-            ]
+            STATUS_COLORS_DICT,
+            STATUS_COLOR_COLUMNS
         )
+        add_status_legend(writer, STATUS_COLORS_DICT, STATUS_RU_DICT, STATUS_RATING_CATEGORY, sheet_name="STATUS_LEGEND")
         logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")
 
 if __name__ == "__main__":

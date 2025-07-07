@@ -51,7 +51,66 @@ FLOAT_FIELDS = [
     'successValue',
 ]
 
-# Статусы для сравнения
+# --- Все цвета статусов здесь ---
+STATUS_COLORS_DICT = {
+    'No Change':        '#BFBFBF',  # Серый
+    'Rang BANK NO CHANGE': '#BFBFBF',
+    'Rang TB NO CHANGE':   '#BFBFBF',
+    'Rang GOSB NO CHANGE': '#BFBFBF',
+    'Change UP':        '#C6EFCE',  # Светло-зелёный
+    'Rang BANK UP':     '#C6EFCE',
+    'Rang TB UP':       '#C6EFCE',
+    'Rang GOSB UP':     '#C6EFCE',
+    'Change DOWN':      '#FFC7CE',  # Светло-красный
+    'Rang BANK DOWN':   '#FFC7CE',
+    'Rang TB DOWN':     '#FFC7CE',
+    'Rang GOSB DOWN':   '#FFC7CE',
+    'New ADD':          '#E2EFDA',  # Бледно-зелёный
+    'Rang BANK NEW':    '#E2EFDA',
+    'Rang TB NEW':      '#E2EFDA',
+    'Rang GOSB NEW':    '#E2EFDA',
+    'Remove FROM':      '#383838',  # Темно-серый, ещё темнее
+    'Rang BANK REMOVE': '#383838',
+    'Rang TB REMOVE':   '#383838',
+    'Rang GOSB REMOVE': '#383838',
+    'Remove':           '#383838',
+    'New':              '#E2EFDA',
+
+    # Для призовых (категорий)
+    "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
+    "STAYED_OUT":       '#BFBFBF',   # Серый (остался вне призёров)
+    "DROPPED_OUT_PRIZE":'#FF0000',   # Красный (выбыл из призёров)
+    "LOST_VIEW":        '#383838',   # Темно-серый (пропал из вида)
+    "PRIZE_UNCHANGED":  '#C6EFCE',   # Светло-зелёный (призёр без изменений)
+    "PRIZE_UP":         '#00B050',   # Зеленый (улучшил место)
+    "PRIZE_DOWN":       '#FFC7CE',   # Светло-красный (понизился)
+}
+
+# Какие колонки раскрашивать (для передачи в apply_status_colors)
+STATUS_COLOR_COLUMNS = [
+    'indicatorValue_Compare',
+    'divisionRatings_BANK_placeInRating_Compare',
+    'divisionRatings_TB_placeInRating_Compare',
+    'divisionRatings_GOSB_placeInRating_Compare',
+    'divisionRatings_BANK_ratingCategoryName_Compare',
+    'divisionRatings_TB_ratingCategoryName_Compare',
+    'divisionRatings_GOSB_ratingCategoryName_Compare'
+]
+
+# --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
+STATUS_RU_DICT = {
+    "ENTERED_PRIZE":      ("ПОПАЛ В ПРИЗЁРЫ", "Был вне призёров, стал призёром. Это хорошо."),
+    "STAYED_OUT":         ("ОСТАЛСЯ ВНЕ ПРИЗЁРОВ", "Не был призёром и не стал. Без изменений, но не лучший результат."),
+    "DROPPED_OUT_PRIZE":  ("ВЫБЫЛ ИЗ ПРИЗЁРОВ", "Был призёром, стал вне призёров. Это плохо."),
+    "LOST_VIEW":          ("ПРОПАЛ ИЗ ВИДА", "Был призёром, теперь отсутствует в итоговом файле."),
+    "PRIZE_UNCHANGED":    ("ПРИЗЁР БЕЗ ИЗМЕНЕНИЙ", "Был призёром, остался на том же месте."),
+    "PRIZE_UP":           ("УЛУЧШИЛ ПРИЗОВОЕ МЕСТО", "Был призёром и стал лучше (например, с бронзы на золото)."),
+    "PRIZE_DOWN":         ("ПОНИЗИЛСЯ В РЕЙТИНГЕ ПРИЗЁРОВ", "Был призёром и опустился на худшее призовое место."),
+
+    # можно добавить аналогично другие статусы, если требуется
+}
+
+# Статусы для сравнения (логика и сокращения)
 STATUS_NEW_REMOVE = {
     "both":        "No Change",
     "before_only": "Remove",
@@ -85,57 +144,20 @@ STATUS_GOSB_PLACE = {
     "val_up":       "Rang GOSB UP",
     "val_down":     "Rang GOSB DOWN"
 }
-
-# СТАТУСЫ ДЛЯ КАТЕГОРИЙ (Краткие переводы на английский)
 CATEGORY_RANK_MAP = {
-    "Вы в лидерах": 1,      # Winner
-    "Серебро": 2,           # Silver
-    "Бронза": 3,            # Bronze
-    "Нужно поднажать": 4,   # OutOfPrize
-    "": 4,                  # Empty == OutOfPrize
-    None: 4                 # None == OutOfPrize
+    "Вы в лидерах": 1,
+    "Серебро": 2,
+    "Бронза": 3,
+    "Нужно поднажать": 4,
+    "": 4,
+    None: 4
 }
 STATUS_RATING_CATEGORY = {
-    "in2prize": "ENTERED_PRIZE",             # ПОПАЛ В ПРИЗЕРЫ
-    "stay_out": "STAYED_OUT",                # ОСТАЛСЯ ВНЕ ПРИЗЕРОВ
-    "from2out": "DROPPED_OUT_PRIZE",         # ВЫБЫЛ ИЗ ПРИЗЕРОВ
-    "lost":     "LOST_VIEW",                 # ПРОПАЛ ИЗ ВИДА
-    "same":     "PRIZE_UNCHANGED",           # ПРИЗЕР БЕЗ ИЗМЕНЕНИЙ
-    "up":       "PRIZE_UP",                  # УЛУЧШИЛ ПРИЗОВОЕ МЕСТО
-    "down":     "PRIZE_DOWN",                # ПОНИЗИЛСЯ В РЕЙТИНГЕ ПРИЗЕРОВ
-}
-
-# Цвета для Excel-раскраски статусов
-COMPARE_STATUS_COLORS = {
-    'No Change':        '#BFBFBF',  # Серый
-    'Rang BANK NO CHANGE': '#BFBFBF',
-    'Rang TB NO CHANGE':   '#BFBFBF',
-    'Rang GOSB NO CHANGE': '#BFBFBF',
-    'Change UP':        '#C6EFCE',  # Светло-зелёный
-    'Rang BANK UP':     '#C6EFCE',
-    'Rang TB UP':       '#C6EFCE',
-    'Rang GOSB UP':     '#C6EFCE',
-    'Change DOWN':      '#FFC7CE',  # Светло-красный
-    'Rang BANK DOWN':   '#FFC7CE',
-    'Rang TB DOWN':     '#FFC7CE',
-    'Rang GOSB DOWN':   '#FFC7CE',
-    'New ADD':          '#E2EFDA',  # Бледно-зелёный
-    'Rang BANK NEW':    '#E2EFDA',
-    'Rang TB NEW':      '#E2EFDA',
-    'Rang GOSB NEW':    '#E2EFDA',
-    'Remove FROM':      '#383838',  # Темно-серый, ещё темнее
-    'Rang BANK REMOVE': '#383838',
-    'Rang TB REMOVE':   '#383838',
-    'Rang GOSB REMOVE': '#383838',
-    'Remove':           '#383838',
-    'New':              '#E2EFDA',
-
-    # Новые для категорий (раскраска строго по вашей схеме)
-    "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
-    "STAYED_OUT":       '#BFBFBF',   # Серый (остался вне призёров)
-    "DROPPED_OUT_PRIZE":'#FF0000',   # Красный (выбыл из призёров)
-    "LOST_VIEW":        '#383838',   # Темно-серый (пропал из вида)
-    "PRIZE_UNCHANGED":  '#C6EFCE',   # Светло-зелёный (призёр без изменений)
-    "PRIZE_UP":         '#00B050',   # Зеленый (улучшил место)
-    "PRIZE_DOWN":       '#FFC7CE',   # Светло-красный (понизился)
+    "in2prize": "ENTERED_PRIZE",
+    "stay_out": "STAYED_OUT",
+    "from2out": "DROPPED_OUT_PRIZE",
+    "lost":     "LOST_VIEW",
+    "same":     "PRIZE_UNCHANGED",
+    "up":       "PRIZE_UP",
+    "down":     "PRIZE_DOWN",
 }

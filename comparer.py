@@ -79,14 +79,13 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         compare_df['divisionRatings_GOSB_placeInRating_Compare'] = compare_df.apply(
             lambda row: rang_compare(row, 'divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating', STATUS_GOSB_PLACE), axis=1)
 
-        # ratingCategoryName сравнение
+        # ratingCategoryName сравнение с логикой "меньше — лучше"
         def category_rank(cat):
             return CATEGORY_RANK_MAP.get(cat, 4)  # если неизвестно — вне призовых
 
         def category_compare(before_cat, after_cat):
             b_rank = category_rank(before_cat)
             a_rank = category_rank(after_cat)
-            # переводим статус согласно правилам пользователя:
             # 1) Не был в призовых или не было вообще, но попал в призовые - "ENTERED_PRIZE"
             if b_rank == 4 and a_rank < 4:
                 return STATUS_RATING_CATEGORY["in2prize"]
@@ -102,10 +101,10 @@ def make_compare_sheet(df_before, df_after, sheet_name):
             # 5) Призовое место не изменилось - "PRIZE_UNCHANGED"
             if b_rank == a_rank and b_rank < 4:
                 return STATUS_RATING_CATEGORY["same"]
-            # 6) Призовое место улучшилось - "PRIZE_UP"
+            # 6) Призовое место улучшилось (меньше — лучше) - "PRIZE_UP"
             if b_rank > a_rank and a_rank < 4:
                 return STATUS_RATING_CATEGORY["up"]
-            # 7) Призовое место снизилось - "PRIZE_DOWN"
+            # 7) Призовое место ухудшилось (меньше — лучше) - "PRIZE_DOWN"
             if b_rank < a_rank and a_rank < 4:
                 return STATUS_RATING_CATEGORY["down"]
             # Если ничего не подошло
