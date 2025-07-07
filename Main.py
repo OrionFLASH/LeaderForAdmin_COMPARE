@@ -4,16 +4,53 @@ import pandas as pd
 from datetime import datetime
 import re
 
+PRIORITY_COLS = [
+    'SourceFile',
+    'tournamentId',
+    'employeeNumber',
+    'lastName',
+    'firstName',
+    'divisionRatings_BANK_groupId',
+    'terDivisionName',
+    'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId',
+    'employeeStatus',
+    'businessBlock',
+    'successValue',
+    'indicatorValue',
+    'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating',
+    'divisionRatings_GOSB_placeInRating',
+    'divisionRatings_BANK_ratingCategoryName',
+    'divisionRatings_TB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName',
+]
+
+# Список полей для преобразования в int
+INT_FIELDS = [
+    'divisionRatings_BANK_groupId',
+    'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId',
+    'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating',
+    'divisionRatings_GOSB_placeInRating',
+]
+
+# Список полей для преобразования в float с 3 знаками после запятой
+FLOAT_FIELDS = [
+    'indicatorValue',
+    'successValue',
+]
+
 def parse_float(val):
-    """Преобразует строку вида '3 168,89' или '3,168.890' в число с 3 знаками после запятой"""
+    """Преобразует строку к float с 3 знаками (убирает все пробелы, в т.ч. тонкие и неразрывные)."""
     if val is None:
         return None
     if isinstance(val, (int, float)):
-        return float(f"{val:.3f}")
-    # Удаляем все кроме цифр, запятой и точки
+        return round(float(val), 3)
     s = str(val)
+    s = re.sub(r'[\s\u00A0\u2009]', '', s)
     s = re.sub(r"[^\d.,\-]", "", s)
-    # Если оба разделителя, оставляем последний как основной
     if s.count(',') > 0 and s.count('.') > 0:
         if s.rfind('.') > s.rfind(','):
             s = s.replace(',', '')
@@ -26,31 +63,58 @@ def parse_float(val):
     except Exception:
         return None
 
+def parse_int(val):
+    """Преобразует строку к int (убирает все пробелы и нечисловые символы)."""
+    if val is None:
+        return None
+    if isinstance(val, int):
+        return val
+    s = str(val)
+    s = re.sub(r'[\s\u00A0\u2009]', '', s)
+    s = re.sub(r"[^\d\-]", "", s)
+    try:
+        return int(s)
+    except Exception:
+        return None
+
 def flatten_leader(leader, tournament_id, source_file):
-    """Возвращает плоскую строку по одному участнику + tournamentId + имя файла."""
+    """Плоская строка по участнику + tournamentId + имя файла. Исключаем photoData."""
     row = {
         'SourceFile': source_file,
         'tournamentId': tournament_id
     }
+    # Прямые поля (без photoData и indicatorValue/successValue)
     for k, v in leader.items():
-        if k not in ("divisionRatings", "indicatorValue", "successValue"):
+        if k in ("divisionRatings", "photoData"):
+            continue
+        if k in FLOAT_FIELDS:
+            row[k] = parse_float(v)
+        else:
             row[k] = v
-    # Форматируем indicatorValue и successValue:
-    row['indicatorValue'] = parse_float(leader.get('indicatorValue'))
-    row['successValue'] = parse_float(leader.get('successValue'))
-    # Разворачиваем divisionRatings:
+    # divisionRatings по groupCode (BANK, TB, GOSB)
     if "divisionRatings" in leader and leader["divisionRatings"]:
-        for idx, div in enumerate(leader["divisionRatings"], 1):
-            group = div.get("groupCode", f"DIV{idx:02d}")
-            for field, value in div.items():
-                if field == "groupCode":
-                    continue
+        for div in leader["divisionRatings"]:
+            group = div.get("groupCode")
+            if not group:
+                continue
+            for field in ("groupId", "placeInRating", "ratingCategoryName"):
                 colname = f"divisionRatings_{group}_{field}"
-                row[colname] = value
+                if field in div:
+                    value = div[field]
+                    if colname in INT_FIELDS:
+                        row[colname] = parse_int(value)
+                    elif colname in FLOAT_FIELDS:
+                        row[colname] = parse_float(value)
+                    else:
+                        row[colname] = value
+    # Убеждаемся, что все FLOAT_FIELDS обработаны (на случай если не было в цикле выше)
+    for f in FLOAT_FIELDS:
+        if f not in row:
+            row[f] = None
     return row
 
 def process_json_file(filepath):
-    """Парсит leaders в плоский DataFrame, добавляет имя файла"""
+    """Парсит leaders, добавляет имя файла, исключает photoData."""
     filename = os.path.basename(filepath)
     with open(filepath, 'r', encoding='utf-8') as f:
         js = json.load(f)
@@ -64,10 +128,13 @@ def process_json_file(filepath):
                 all_rows.append(flatten_leader(leader, tournament_id, filename))
     return pd.DataFrame(all_rows)
 
-def align_dataframes(df1, df2):
-    """Обеспечивает одинаковую структуру обеих таблиц (одинаковый набор колонок)"""
-    all_columns = sorted(set(df1.columns).union(df2.columns))
-    return df1.reindex(columns=all_columns), df2.reindex(columns=all_columns)
+def align_and_sort(df, all_columns):
+    """Выравнивает датафрейм под нужный порядок столбцов, добавляет пустые если их нет."""
+    for col in all_columns:
+        if col not in df.columns:
+            df[col] = None
+    rest = [c for c in df.columns if c not in all_columns]
+    return df[all_columns + rest]
 
 def main(
     source_dir: str,
@@ -90,9 +157,13 @@ def main(
     df_after = process_json_file(after_path)
     print(f"[INFO] AFTER: строк {len(df_after)}, колонок {len(df_after.columns)}")
 
-    # Выравниваем столбцы по максимальному объединенному набору
-    df_before, df_after = align_dataframes(df_before, df_after)
-    print(f"[INFO] Итоговое количество столбцов (в обеих таблицах): {len(df_before.columns)}")
+    # Все уникальные колонки для обеих таблиц
+    all_cols = PRIORITY_COLS.copy()
+    all_cols += [c for c in set(df_before.columns).union(df_after.columns) if c not in all_cols]
+
+    df_before = align_and_sort(df_before, all_cols)
+    df_after = align_and_sort(df_after, all_cols)
+    print(f"[INFO] Итоговое количество столбцов: {len(df_before.columns)}")
 
     # Имя Excel с таймштампом
     base, ext = os.path.splitext(result_excel)
