@@ -141,6 +141,45 @@ def log_data_stats(df, label):
     for tid, group in df.groupby('tournamentId'):
         print(f"[STAT]   tournamentId = {tid}: людей = {len(group)}")
 
+def make_compare_sheet(df_before, df_after, priority_cols, sheet_name):
+    """
+    Формирует датафрейм сравнения:
+    - одна строка на уникальную пару (tournamentId, employeeNumber) из обоих файлов.
+    - для каждого поля — пара колонок (BEFORE/AFTER).
+    """
+    join_keys = ['tournamentId', 'employeeNumber']
+
+    # Оставим только уникальные строки по ключам (на случай дублирования)
+    before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
+    after_uniq  = df_after.drop_duplicates(subset=join_keys, keep='last')
+
+    # Список для compare — все ключи из обоих файлов
+    all_keys = pd.concat([before_uniq[join_keys], after_uniq[join_keys]]).drop_duplicates()
+
+    # Добавим суффиксы к столбцам
+    before_cols = [c for c in priority_cols if c not in join_keys]
+    after_cols = before_cols.copy()
+    before_uniq = before_uniq.set_index(join_keys)
+    after_uniq  = after_uniq.set_index(join_keys)
+
+    before_uniq = before_uniq.add_suffix('_BEFORE')
+    after_uniq  = after_uniq.add_suffix('_AFTER')
+
+    # Объединяем
+    compare_df = all_keys.set_index(join_keys) \
+        .join(before_uniq, how='left') \
+        .join(after_uniq, how='left') \
+        .reset_index()
+
+    # Итоговый порядок: ключи, все BEFORE, все AFTER (сохраняем ваш приоритет)
+    cols_order = join_keys + \
+                 [c + '_BEFORE' for c in before_cols] + \
+                 [c + '_AFTER' for c in after_cols]
+    compare_df = compare_df.reindex(columns=cols_order)
+
+    print(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
+    return compare_df, sheet_name
+
 def main(
     source_dir: str,
     target_dir: str,
@@ -156,6 +195,7 @@ def main(
     ts = now.strftime("%Y%m%d_%H%M%S")
     sheet_before = f"BEFORE_{ts}"
     sheet_after = f"AFTER_{ts}"
+    sheet_compare = f"COMPARE_{ts}"
 
     df_before = process_json_file(before_path)
     print(f"[INFO] BEFORE: строк {len(df_before)}, колонок {len(df_before.columns)}")
@@ -175,6 +215,9 @@ def main(
     df_after = align_and_sort(df_after, all_cols)
     print(f"[INFO] Итоговое количество столбцов (финальная структура): {len(df_before.columns)}")
 
+    # Формируем compare sheet
+    compare_df, sheet_compare = make_compare_sheet(df_before, df_after, all_cols, sheet_compare)
+
     base, ext = os.path.splitext(result_excel)
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(target_dir, result_excel_ts)
@@ -184,6 +227,8 @@ def main(
         print(f"[OK] BEFORE экспортирован: {len(df_before)} строк, {len(df_before.columns)} колонок.")
         df_after.to_excel(writer, index=False, sheet_name=sheet_after)
         print(f"[OK] AFTER экспортирован: {len(df_after)} строк, {len(df_after.columns)} колонок.")
+        compare_df.to_excel(writer, index=False, sheet_name=sheet_compare)
+        print(f"[OK] COMPARE экспортирован: {len(compare_df)} строк, {len(compare_df.columns)} колонок.")
     print(f"[SUCCESS] Файл {out_excel} создан.")
 
 if __name__ == "__main__":
