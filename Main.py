@@ -11,14 +11,15 @@ LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 
 def setup_logger(log_dir, basename):
     now = datetime.now()
-    ts = now.strftime("%Y%m%d_%H%M%S")
+    day_str = now.strftime("%Y%m%d")
     os.makedirs(log_dir, exist_ok=True)
-    log_path = os.path.join(log_dir, f"{basename}_{ts}.log")
+    log_path = os.path.join(log_dir, f"{basename}_{day_str}.log")
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
+    # Удаляем старые хэндлеры для повторных запусков
     if logger.hasHandlers():
         logger.handlers.clear()
-    fh = logging.FileHandler(log_path, encoding='utf-8')
+    fh = logging.FileHandler(log_path, encoding='utf-8', mode='a')  # 'a' — append
     fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.INFO)
@@ -27,8 +28,9 @@ def setup_logger(log_dir, basename):
     ch.setFormatter(fmt)
     logger.addHandler(fh)
     logger.addHandler(ch)
-    logging.info(f"Лог-файл запущен: {log_path}")
+    logging.info(f"Лог-файл активен (append): {log_path}")
     return logger
+
 
 # === Ваши списки полей и статусов ===
 PRIORITY_COLS = [
