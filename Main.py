@@ -50,8 +50,36 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
                 'format':   writer.book.add_format({'bg_color': color})
             })
 
+def log_data_stats(df, label):
+    if df.empty:
+        import logging
+        logging.info(f"[{label}] DataFrame пустой.")
+        return
+    n_rows = len(df)
+    n_cols = len(df.columns)
+    tournament_counts = df['tournamentId'].value_counts().to_dict()
+    unique_tids = list(df['tournamentId'].unique())
+    import logging
+    logging.info(f"[{label}] строк: {n_rows}, колонок: {n_cols}")
+    logging.info(f"[{label}] tournamentId всего: {len(unique_tids)} -> {unique_tids}")
+    for tid in unique_tids:
+        count = tournament_counts.get(tid, 0)
+        logging.info(f"[{label}] tournamentId={tid}: людей={count}")
+    logging.info(f"[{label}] Все поля: {list(df.columns)}")
+
+def log_compare_stats(compare_df):
+    import logging
+    n_rows = len(compare_df)
+    logging.info(f"[COMPARE] Строк всего: {n_rows}")
+    for col in ['New_Remove', 'indicatorValue_Compare',
+                'divisionRatings_BANK_placeInRating_Compare',
+                'divisionRatings_TB_placeInRating_Compare',
+                'divisionRatings_GOSB_placeInRating_Compare']:
+        if col in compare_df.columns:
+            counts = compare_df[col].value_counts(dropna=False).to_dict()
+            logging.info(f"[COMPARE] {col}: {counts}")
+
 def main():
-    # Настроим логгер (и файл, и консоль)
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
 
     before_path = os.path.join(SOURCE_DIR, BEFORE_FILENAME)
@@ -64,10 +92,22 @@ def main():
 
     logger.info(f"[MAIN] Читаем BEFORE: {before_path}")
     df_before = process_json_file(before_path)
+    log_data_stats(df_before, "BEFORE")
     logger.info(f"[MAIN] Читаем AFTER: {after_path}")
     df_after = process_json_file(after_path)
+    log_data_stats(df_after, "AFTER")
 
-    # Приводим оба DataFrame к единому набору колонок в нужном порядке
+    before_tids = set(df_before['tournamentId'].unique())
+    after_tids = set(df_after['tournamentId'].unique())
+    added_tids = after_tids - before_tids
+    removed_tids = before_tids - after_tids
+    common_tids = before_tids & after_tids
+
+    logger.info(f"[MAIN] Турниров в BEFORE: {len(before_tids)}, в AFTER: {len(after_tids)}")
+    logger.info(f"[MAIN] Новые турниры (только в AFTER): {len(added_tids)} -> {list(added_tids)}")
+    logger.info(f"[MAIN] Удалённые турниры (только в BEFORE): {len(removed_tids)} -> {list(removed_tids)}")
+    logger.info(f"[MAIN] Общие турниры: {len(common_tids)} -> {list(common_tids)}")
+
     all_cols = PRIORITY_COLS.copy()
     all_cols += [c for c in set(df_before.columns).union(df_after.columns) if c not in all_cols]
     df_before = df_before.reindex(columns=all_cols)
@@ -78,11 +118,13 @@ def main():
         df_before, df_after, sheet_compare
     )
 
+    # Статистика сравнения COMPARE
+    log_compare_stats(compare_df)
+
     base, ext = os.path.splitext(RESULT_EXCEL)
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(TARGET_DIR, result_excel_ts)
 
-    # Экспорт в Excel
     with pd.ExcelWriter(out_excel, engine='xlsxwriter') as writer:
         logger.info(f"[MAIN] Экспортируем BEFORE лист {sheet_before}")
         df_before.to_excel(writer, index=False, sheet_name=sheet_before)

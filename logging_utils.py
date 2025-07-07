@@ -1,13 +1,22 @@
 import logging
 import os
 from datetime import datetime
-from config import LOG_BASENAME, LOG_DIR
 
-def setup_logger():
+def setup_logger(log_dir, basename):
+    """
+    Создаёт логгер, который пишет и в файл (append, по дате), и в консоль.
+    log_dir: путь к папке для логов
+    basename: имя (без даты) для лог-файла
+    """
     now = datetime.now()
     day_str = now.strftime("%Y%m%d")
-    os.makedirs(LOG_DIR, exist_ok=True)
-    log_path = os.path.join(LOG_DIR, f"{LOG_BASENAME}_{day_str}.log")
+    time_str = now.strftime("%H:%M:%S")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, f"{basename}_{day_str}.log")
+    # Добавляем маркер начала новой сессии
+    with open(log_path, "a", encoding="utf-8") as logf:
+        logf.write(f"\n-------- NEW LOG START AT {day_str} ({time_str}) -------\n")
+    # Стандартное подключение логгера
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     if logger.hasHandlers():
