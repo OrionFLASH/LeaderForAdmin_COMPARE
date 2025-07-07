@@ -10,8 +10,8 @@ PRIORITY_COLS = [
     'employeeNumber',
     'lastName',
     'firstName',
-    'divisionRatings_BANK_groupId',
     'terDivisionName',
+    'divisionRatings_BANK_groupId',
     'divisionRatings_TB_groupId',
     'divisionRatings_GOSB_groupId',
     'employeeStatus',
@@ -162,7 +162,6 @@ def main(
     df_after = process_json_file(after_path)
     print(f"[INFO] AFTER: строк {len(df_after)}, колонок {len(df_after.columns)}")
 
-    # Лог по данным
     log_data_stats(df_before, "BEFORE")
     log_data_stats(df_after, "AFTER")
 
