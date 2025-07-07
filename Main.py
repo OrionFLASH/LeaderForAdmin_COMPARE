@@ -125,10 +125,12 @@ def main():
     sheet_compare = f"COMPARE_{ts}"
 
     logger.info(f"[MAIN] Читаем BEFORE: {before_path}")
-    df_before = process_json_file(before_path)
+    rows_before = process_json_file(before_path)
+    df_before = pd.DataFrame(rows_before)
     log_data_stats(df_before, "BEFORE")
     logger.info(f"[MAIN] Читаем AFTER: {after_path}")
-    df_after = process_json_file(after_path)
+    rows_after = process_json_file(after_path)
+    df_after = pd.DataFrame(rows_after)
     log_data_stats(df_after, "AFTER")
 
     before_tids = set(df_before['tournamentId'].unique())
