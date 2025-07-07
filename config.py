@@ -5,8 +5,8 @@ SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JS
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 LOG_BASENAME = "LOG"
-BEFORE_FILENAME = "LFA_0.json"
-AFTER_FILENAME = "LFA_4.json"
+BEFORE_FILENAME = "LFA_5.json"
+AFTER_FILENAME = "LFA_6.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
 # Структура колонок
