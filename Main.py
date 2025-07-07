@@ -26,7 +26,6 @@ PRIORITY_COLS = [
     'divisionRatings_GOSB_ratingCategoryName',
 ]
 
-# Список полей для преобразования в int
 INT_FIELDS = [
     'divisionRatings_BANK_groupId',
     'divisionRatings_TB_groupId',
@@ -36,14 +35,12 @@ INT_FIELDS = [
     'divisionRatings_GOSB_placeInRating',
 ]
 
-# Список полей для преобразования в float с 3 знаками после запятой
 FLOAT_FIELDS = [
     'indicatorValue',
     'successValue',
 ]
 
 def parse_float(val):
-    """Преобразует строку к float с 3 знаками (убирает все пробелы, в т.ч. тонкие и неразрывные)."""
     if val is None:
         return None
     if isinstance(val, (int, float)):
@@ -64,7 +61,6 @@ def parse_float(val):
         return None
 
 def parse_int(val):
-    """Преобразует строку к int (убирает все пробелы и нечисловые символы)."""
     if val is None:
         return None
     if isinstance(val, int):
@@ -78,12 +74,10 @@ def parse_int(val):
         return None
 
 def flatten_leader(leader, tournament_id, source_file):
-    """Плоская строка по участнику + tournamentId + имя файла. Исключаем photoData."""
     row = {
         'SourceFile': source_file,
         'tournamentId': tournament_id
     }
-    # Прямые поля (без photoData и indicatorValue/successValue)
     for k, v in leader.items():
         if k in ("divisionRatings", "photoData"):
             continue
@@ -91,7 +85,6 @@ def flatten_leader(leader, tournament_id, source_file):
             row[k] = parse_float(v)
         else:
             row[k] = v
-    # divisionRatings по groupCode (BANK, TB, GOSB)
     if "divisionRatings" in leader and leader["divisionRatings"]:
         for div in leader["divisionRatings"]:
             group = div.get("groupCode")
@@ -107,14 +100,12 @@ def flatten_leader(leader, tournament_id, source_file):
                         row[colname] = parse_float(value)
                     else:
                         row[colname] = value
-    # Убеждаемся, что все FLOAT_FIELDS обработаны (на случай если не было в цикле выше)
     for f in FLOAT_FIELDS:
         if f not in row:
             row[f] = None
     return row
 
 def process_json_file(filepath):
-    """Парсит leaders, добавляет имя файла, исключает photoData."""
     filename = os.path.basename(filepath)
     with open(filepath, 'r', encoding='utf-8') as f:
         js = json.load(f)
@@ -129,12 +120,26 @@ def process_json_file(filepath):
     return pd.DataFrame(all_rows)
 
 def align_and_sort(df, all_columns):
-    """Выравнивает датафрейм под нужный порядок столбцов, добавляет пустые если их нет."""
     for col in all_columns:
         if col not in df.columns:
             df[col] = None
     rest = [c for c in df.columns if c not in all_columns]
     return df[all_columns + rest]
+
+def log_columns(df, label, final_columns):
+    print(f"[LOG] {label} — исходно {len(df.columns)} колонок: {sorted(list(df.columns))}")
+    print(f"[LOG] {label} — сохраняется {len(final_columns)} колонок: {final_columns}")
+    added = [col for col in final_columns if col not in df.columns]
+    removed = [col for col in df.columns if col not in final_columns]
+    if added:
+        print(f"[LOG] {label} — добавлены новые пустые колонки: {added}")
+    if removed:
+        print(f"[LOG] {label} — эти колонки будут удалены: {removed}")
+
+def log_data_stats(df, label):
+    print(f"[STAT] {label}: найдено уникальных tournamentId = {df['tournamentId'].nunique()}")
+    for tid, group in df.groupby('tournamentId'):
+        print(f"[STAT]   tournamentId = {tid}: людей = {len(group)}")
 
 def main(
     source_dir: str,
@@ -157,15 +162,20 @@ def main(
     df_after = process_json_file(after_path)
     print(f"[INFO] AFTER: строк {len(df_after)}, колонок {len(df_after.columns)}")
 
-    # Все уникальные колонки для обеих таблиц
+    # Лог по данным
+    log_data_stats(df_before, "BEFORE")
+    log_data_stats(df_after, "AFTER")
+
     all_cols = PRIORITY_COLS.copy()
     all_cols += [c for c in set(df_before.columns).union(df_after.columns) if c not in all_cols]
 
+    log_columns(df_before, "BEFORE", all_cols)
+    log_columns(df_after, "AFTER", all_cols)
+
     df_before = align_and_sort(df_before, all_cols)
     df_after = align_and_sort(df_after, all_cols)
-    print(f"[INFO] Итоговое количество столбцов: {len(df_before.columns)}")
+    print(f"[INFO] Итоговое количество столбцов (финальная структура): {len(df_before.columns)}")
 
-    # Имя Excel с таймштампом
     base, ext = os.path.splitext(result_excel)
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(target_dir, result_excel_ts)
@@ -182,6 +192,6 @@ if __name__ == "__main__":
         source_dir="//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON",
         target_dir="//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX",
         before_filename="LFA_0.json",
-        after_filename="LFA_2.json",
+        after_filename="LFA_4.json",
         result_excel="LFA_COMPARE.xlsx"
     )
