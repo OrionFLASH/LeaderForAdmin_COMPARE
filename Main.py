@@ -2,123 +2,71 @@ import os
 import json
 import pandas as pd
 from datetime import datetime
-from typing import Any, Dict, List, Union
-from collections import defaultdict
 
+def flatten_leader(leader, tournament_id):
+    row = {'tournamentId': tournament_id}
+    for k, v in leader.items():
+        if k != "divisionRatings":
+            row[k] = v
+    if "divisionRatings" in leader and leader["divisionRatings"]:
+        for div in leader["divisionRatings"]:
+            group = div.get("groupCode", "DIV")
+            for field, value in div.items():
+                if field == "groupCode":
+                    continue
+                colname = f"divisionRatings_{group}_{field}"
+                row[colname] = value
+    return row
 
-def flatten_json_v2(
-        y: Union[Dict, List],
-        parent_key: str = '',
-        sep: str = '_',
-        key_count: dict = None
-) -> List[Dict]:
-    """
-    Разворачивает вложенный JSON в плоскую структуру с уникальными именами столбцов.
-    При совпадении имен на одном уровне добавляет суффиксы (_01, _02, ...).
-    """
-    items = []
-    if key_count is None:
-        key_count = defaultdict(int)
-
-    def _flatten(obj, key_prefix, acc, local_key_count):
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                # Учет повторяющихся ключей на текущем уровне
-                full_key = f"{key_prefix}{sep}{k}" if key_prefix else k
-                local_key_count[full_key] += 1
-                count = local_key_count[full_key]
-                key_with_idx = f"{full_key}_{count:02d}" if count > 1 else full_key
-                _flatten(v, key_with_idx, acc, defaultdict(int))
-        elif isinstance(obj, list):
-            for idx, v in enumerate(obj):
-                _flatten(v, f"{key_prefix}{sep}{idx}", acc, defaultdict(int))
-        else:
-            acc[key_prefix] = obj
-
-    # Начальная точка обработки — dict или list
-    if isinstance(y, dict):
-        for k, v in y.items():
-            acc = {}
-            _flatten(v, k, acc, defaultdict(int))
-            if acc:
-                items.append(acc)
-        if not items:
-            items.append({})
-    elif isinstance(y, list):
-        for elem in y:
-            acc = {}
-            _flatten(elem, '', acc, defaultdict(int))
-            if acc:
-                items.append(acc)
-    return items
-
-
-def process_json_file(filepath: str, label: str) -> pd.DataFrame:
-    print(f"[INFO] Чтение файла: {filepath}")
-    # Проверяем, существует ли файл
-    if not os.path.exists(filepath):
-        print(f"[ERROR] Файл не найден: {filepath}")
-        return pd.DataFrame()
-    # Загружаем JSON
+def process_json_file(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
         js = json.load(f)
-    print(f"[INFO] Загружено содержимое файла. Начинаем разворачивание вложенной структуры...")
-    # Разворачиваем JSON
-    rows = flatten_json_v2(js)
-    print(f"[INFO] Файл '{label}': всего записей (строк для экспорта): {len(rows)}")
-    return pd.DataFrame(rows)
-
+    all_rows = []
+    for block in js.values():
+        # Универсально: если block — список, обработаем каждый элемент, иначе один объект
+        blocks = block if isinstance(block, list) else [block]
+        for subblock in blocks:
+            tournament = subblock.get("body", {}).get("tournament", {})
+            tournament_id = tournament.get("tournamentId")
+            for leader in tournament.get("leaders", []):
+                all_rows.append(flatten_leader(leader, tournament_id))
+    return pd.DataFrame(all_rows)
 
 def main(
-        source_dir: str,
-        target_dir: str,
-        before_filename: str,
-        after_filename: str,
-        result_excel: str
+    source_dir: str,
+    target_dir: str,
+    before_filename: str,
+    after_filename: str,
+    result_excel: str
 ):
-    print(f"[START] Старт программы сравнения JSON -> Excel")
-    print(f"[PATHS] Исходная папка: {source_dir}")
-    print(f"[PATHS] Папка для Excel: {target_dir}")
-    print(f"[FILES] BEFORE: {before_filename} | AFTER: {after_filename} | Excel: {result_excel}")
-
+    print(f"[START] Экспорт лидеров по турнирам...")
     before_path = os.path.join(source_dir, before_filename)
     after_path = os.path.join(source_dir, after_filename)
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
-        print(f"[INFO] Папка {target_dir} создана.")
 
-    # Формируем имена листов по дате/времени
     now = datetime.now()
-    ts = now.strftime("%y%m%d_%H%M")
+    ts = now.strftime("%Y%m%d_%H%M%S")
     sheet_before = f"BEFORE_{ts}"
     sheet_after = f"AFTER_{ts}"
 
-    # Обработка "до"
-    df_before = process_json_file(before_path, label="BEFORE")
-    print(f"[INFO] Столбцов (полей) в BEFORE: {len(df_before.columns)}")
-    # Обработка "после"
-    df_after = process_json_file(after_path, label="AFTER")
-    print(f"[INFO] Столбцов (полей) в AFTER: {len(df_after.columns)}")
+    df_before = process_json_file(before_path)
+    print(f"[INFO] BEFORE: строк {len(df_before)}, колонок {len(df_before.columns)}")
+    df_after = process_json_file(after_path)
+    print(f"[INFO] AFTER: строк {len(df_after)}, колонок {len(df_after.columns)}")
 
-    # Путь к Excel
-    out_excel = os.path.join(target_dir, result_excel)
-    print(f"[INFO] Экспорт в файл: {out_excel}")
+    base, ext = os.path.splitext(result_excel)
+    result_excel_ts = f"{base}_{ts}{ext}"
+    out_excel = os.path.join(target_dir, result_excel_ts)
 
-    # Сохраняем оба датафрейма на разные листы Excel
     with pd.ExcelWriter(out_excel, engine='xlsxwriter') as writer:
         df_before.to_excel(writer, index=False, sheet_name=sheet_before)
-        print(f"[OK] Записано в лист '{sheet_before}': {len(df_before)} строк.")
         df_after.to_excel(writer, index=False, sheet_name=sheet_after)
-        print(f"[OK] Записано в лист '{sheet_after}': {len(df_after)} строк.")
-
-    print(f"[SUCCESS] Готово. Excel файл сохранен по адресу: {out_excel}")
-
+    print(f"[SUCCESS] Файл {out_excel} создан.")
 
 if __name__ == "__main__":
     main(
         source_dir="//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON",
         target_dir="//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX",
         before_filename="LFA_0.json",
-        after_filename="LFA_2.json",
+        after_filename="LFA_1.json",
         result_excel="LFA_COMPARE.xlsx"
     )
