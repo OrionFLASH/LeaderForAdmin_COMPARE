@@ -4,30 +4,7 @@ import pandas as pd
 from datetime import datetime
 import re
 
-# Уникальные ключи в COMPARE-листе
-COMPARE_KEYS = [
-    'tournamentId',
-    'employeeNumber',
-    'lastName',
-    'firstName',
-]
-
-# Только эти поля сравниваются (с префиксом BEFORE_ и AFTER_)
-COMPARE_FIELDS = [
-    'SourceFile',
-    'terDivisionName',
-    'divisionRatings_TB_groupId',
-    'divisionRatings_GOSB_groupId',
-    'indicatorValue',
-    'divisionRatings_BANK_placeInRating',
-    'divisionRatings_TB_placeInRating',
-    'divisionRatings_GOSB_placeInRating',
-    'divisionRatings_BANK_ratingCategoryName',
-    'divisionRatings_TB_ratingCategoryName',
-    'divisionRatings_GOSB_ratingCategoryName',
-]
-
-# Полные поля для BEFORE/AFTER — ваши
+# === Ваши списки полей ===
 PRIORITY_COLS = [
     'SourceFile',
     'tournamentId',
@@ -64,6 +41,28 @@ FLOAT_FIELDS = [
     'successValue',
 ]
 
+COMPARE_KEYS = [
+    'tournamentId',
+    'employeeNumber',
+    'lastName',
+    'firstName',
+]
+
+COMPARE_FIELDS = [
+    'SourceFile',
+    'terDivisionName',
+    'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId',
+    'indicatorValue',
+    'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating',
+    'divisionRatings_GOSB_placeInRating',
+    'divisionRatings_BANK_ratingCategoryName',
+    'divisionRatings_TB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName',
+]
+
+# === Преобразование числовых значений ===
 def parse_float(val):
     if val is None:
         return None
@@ -97,6 +96,7 @@ def parse_int(val):
     except Exception:
         return None
 
+# === Основные функции обработки ===
 def flatten_leader(leader, tournament_id, source_file):
     row = {
         'SourceFile': source_file,
@@ -166,42 +166,45 @@ def log_data_stats(df, label):
         print(f"[STAT]   tournamentId = {tid}: людей = {len(group)}")
 
 def make_compare_sheet(df_before, df_after, compare_keys, compare_fields, sheet_name):
-    """
-    - ключи — только (tournamentId, employeeNumber, lastName, firstName)
-    - для каждого поля из compare_fields делаем BEFORE_... и AFTER_...
-    - только эти колонки, другие не включать!
-    """
     join_keys = compare_keys
-
     before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
     after_uniq  = df_after.drop_duplicates(subset=join_keys, keep='last')
-
     all_keys = pd.concat([before_uniq[join_keys], after_uniq[join_keys]]).drop_duplicates()
-
     before_uniq = before_uniq.set_index(join_keys)
     after_uniq  = after_uniq.set_index(join_keys)
-
-    # Только нужные колонки для сравнения
     before_uniq = before_uniq[compare_fields] if len(before_uniq) else pd.DataFrame(columns=compare_fields)
     after_uniq  = after_uniq[compare_fields]  if len(after_uniq) else pd.DataFrame(columns=compare_fields)
-
     before_uniq = before_uniq.add_prefix('BEFORE_')
     after_uniq  = after_uniq.add_prefix('AFTER_')
-
     compare_df = all_keys.set_index(join_keys) \
         .join(before_uniq, how='left') \
         .join(after_uniq, how='left') \
         .reset_index()
-
-    # Итоговый порядок: ключи, все BEFORE_, все AFTER_
     cols_order = compare_keys + \
         ['BEFORE_' + c for c in compare_fields] + \
         ['AFTER_' + c for c in compare_fields]
     compare_df = compare_df.reindex(columns=cols_order)
-
     print(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
     return compare_df, sheet_name
 
+# === Создание SMART TABLE в Excel ===
+def add_smart_table(writer, df, sheet_name, table_name):
+    worksheet = writer.sheets[sheet_name]
+    (nrows, ncols) = df.shape
+    if nrows == 0:
+        print(f"[SMART] {sheet_name}: пустая таблица — не создаём Smart Table.")
+        return
+    col_letters = [chr(65 + i) if i < 26 else chr(65 + i // 26 - 1) + chr(65 + i % 26) for i in range(ncols)]
+    last_col = col_letters[-1]
+    excel_range = f"A1:{last_col}{nrows+1}"
+    worksheet.add_table(excel_range, {
+        'name': table_name,
+        'columns': [{'header': col} for col in df.columns],
+        'style': 'TableStyleMedium9',  # Можно выбрать другой стиль
+    })
+    print(f"[SMART] {sheet_name}: Smart Table '{table_name}' оформлена.")
+
+# === Главная функция ===
 def main(
     source_dir: str,
     target_dir: str,
@@ -212,7 +215,6 @@ def main(
     print(f"[START] Экспорт лидеров по турнирам...")
     before_path = os.path.join(source_dir, before_filename)
     after_path = os.path.join(source_dir, after_filename)
-
     now = datetime.now()
     ts = now.strftime("%Y%m%d_%H%M%S")
     sheet_before = f"BEFORE_{ts}"
@@ -237,7 +239,7 @@ def main(
     df_after = align_and_sort(df_after, all_cols)
     print(f"[INFO] Итоговое количество столбцов (финальная структура): {len(df_before.columns)}")
 
-    # Формируем compare sheet (ТОЛЬКО нужные ключи и compare-поля!)
+    # COMPARE — только нужные ключи и compare-поля!
     compare_df, sheet_compare = make_compare_sheet(
         df_before, df_after, COMPARE_KEYS, COMPARE_FIELDS, sheet_compare
     )
@@ -247,12 +249,21 @@ def main(
     out_excel = os.path.join(target_dir, result_excel_ts)
 
     with pd.ExcelWriter(out_excel, engine='xlsxwriter') as writer:
+        # BEFORE
         df_before.to_excel(writer, index=False, sheet_name=sheet_before)
+        add_smart_table(writer, df_before, sheet_before, "SMART_" + sheet_before)
         print(f"[OK] BEFORE экспортирован: {len(df_before)} строк, {len(df_before.columns)} колонок.")
+
+        # AFTER
         df_after.to_excel(writer, index=False, sheet_name=sheet_after)
+        add_smart_table(writer, df_after, sheet_after, "SMART_" + sheet_after)
         print(f"[OK] AFTER экспортирован: {len(df_after)} строк, {len(df_after.columns)} колонок.")
+
+        # COMPARE
         compare_df.to_excel(writer, index=False, sheet_name=sheet_compare)
+        add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare)
         print(f"[OK] COMPARE экспортирован: {len(compare_df)} строк, {len(compare_df.columns)} колонок.")
+
     print(f"[SUCCESS] Файл {out_excel} создан.")
 
 if __name__ == "__main__":
