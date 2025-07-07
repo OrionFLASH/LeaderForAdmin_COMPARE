@@ -4,6 +4,30 @@ import pandas as pd
 from datetime import datetime
 import re
 
+# Уникальные ключи в COMPARE-листе
+COMPARE_KEYS = [
+    'tournamentId',
+    'employeeNumber',
+    'lastName',
+    'firstName',
+]
+
+# Только эти поля сравниваются (с префиксом BEFORE_ и AFTER_)
+COMPARE_FIELDS = [
+    'SourceFile',
+    'terDivisionName',
+    'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId',
+    'indicatorValue',
+    'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating',
+    'divisionRatings_GOSB_placeInRating',
+    'divisionRatings_BANK_ratingCategoryName',
+    'divisionRatings_TB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName',
+]
+
+# Полные поля для BEFORE/AFTER — ваши
 PRIORITY_COLS = [
     'SourceFile',
     'tournamentId',
@@ -141,40 +165,38 @@ def log_data_stats(df, label):
     for tid, group in df.groupby('tournamentId'):
         print(f"[STAT]   tournamentId = {tid}: людей = {len(group)}")
 
-def make_compare_sheet(df_before, df_after, priority_cols, sheet_name):
+def make_compare_sheet(df_before, df_after, compare_keys, compare_fields, sheet_name):
     """
-    Формирует датафрейм сравнения:
-    - одна строка на уникальную пару (tournamentId, employeeNumber) из обоих файлов.
-    - для каждого поля — пара колонок (BEFORE/AFTER).
+    - ключи — только (tournamentId, employeeNumber, lastName, firstName)
+    - для каждого поля из compare_fields делаем BEFORE_... и AFTER_...
+    - только эти колонки, другие не включать!
     """
-    join_keys = ['tournamentId', 'employeeNumber']
+    join_keys = compare_keys
 
-    # Оставим только уникальные строки по ключам (на случай дублирования)
     before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
     after_uniq  = df_after.drop_duplicates(subset=join_keys, keep='last')
 
-    # Список для compare — все ключи из обоих файлов
     all_keys = pd.concat([before_uniq[join_keys], after_uniq[join_keys]]).drop_duplicates()
 
-    # Добавим суффиксы к столбцам
-    before_cols = [c for c in priority_cols if c not in join_keys]
-    after_cols = before_cols.copy()
     before_uniq = before_uniq.set_index(join_keys)
     after_uniq  = after_uniq.set_index(join_keys)
 
-    before_uniq = before_uniq.add_suffix('_BEFORE')
-    after_uniq  = after_uniq.add_suffix('_AFTER')
+    # Только нужные колонки для сравнения
+    before_uniq = before_uniq[compare_fields] if len(before_uniq) else pd.DataFrame(columns=compare_fields)
+    after_uniq  = after_uniq[compare_fields]  if len(after_uniq) else pd.DataFrame(columns=compare_fields)
 
-    # Объединяем
+    before_uniq = before_uniq.add_prefix('BEFORE_')
+    after_uniq  = after_uniq.add_prefix('AFTER_')
+
     compare_df = all_keys.set_index(join_keys) \
         .join(before_uniq, how='left') \
         .join(after_uniq, how='left') \
         .reset_index()
 
-    # Итоговый порядок: ключи, все BEFORE, все AFTER (сохраняем ваш приоритет)
-    cols_order = join_keys + \
-                 [c + '_BEFORE' for c in before_cols] + \
-                 [c + '_AFTER' for c in after_cols]
+    # Итоговый порядок: ключи, все BEFORE_, все AFTER_
+    cols_order = compare_keys + \
+        ['BEFORE_' + c for c in compare_fields] + \
+        ['AFTER_' + c for c in compare_fields]
     compare_df = compare_df.reindex(columns=cols_order)
 
     print(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
@@ -215,8 +237,10 @@ def main(
     df_after = align_and_sort(df_after, all_cols)
     print(f"[INFO] Итоговое количество столбцов (финальная структура): {len(df_before.columns)}")
 
-    # Формируем compare sheet
-    compare_df, sheet_compare = make_compare_sheet(df_before, df_after, all_cols, sheet_compare)
+    # Формируем compare sheet (ТОЛЬКО нужные ключи и compare-поля!)
+    compare_df, sheet_compare = make_compare_sheet(
+        df_before, df_after, COMPARE_KEYS, COMPARE_FIELDS, sheet_compare
+    )
 
     base, ext = os.path.splitext(result_excel)
     result_excel_ts = f"{base}_{ts}{ext}"
