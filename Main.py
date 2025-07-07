@@ -90,25 +90,25 @@ STATUS_INDICATOR = {
     "val_up":       "Change UP"
 }
 STATUS_BANK_PLACE = {
-    "val_add":      "Rang NEW",
-    "val_remove":   "Rang REMOVE",
-    "val_nochange": "Rang NO CHANGE",
-    "val_up":       "Rang UP",
-    "val_down":     "Rang DOWN"
+    "val_add":      "Rang BANK NEW",
+    "val_remove":   "Rang BANK REMOVE",
+    "val_nochange": "Rang BANK NO CHANGE",
+    "val_up":       "Rang BANK UP",
+    "val_down":     "Rang BANK DOWN"
 }
 STATUS_TB_PLACE = {
-    "val_add":      "TB NEW",
-    "val_remove":   "TB REMOVE",
-    "val_nochange": "TB NO CHANGE",
-    "val_up":       "TB UP",
-    "val_down":     "TB DOWN"
+    "val_add":      "Rang TB NEW",
+    "val_remove":   "Rang TB REMOVE",
+    "val_nochange": "Rang TB NO CHANGE",
+    "val_up":       "Rang TB UP",
+    "val_down":     "Rang TB DOWN"
 }
 STATUS_GOSB_PLACE = {
-    "val_add":      "GOSB NEW",
-    "val_remove":   "GOSB REMOVE",
-    "val_nochange": "GOSB NO CHANGE",
-    "val_up":       "GOSB UP",
-    "val_down":     "GOSB DOWN"
+    "val_add":      "Rang GOSB NEW",
+    "val_remove":   "Rang GOSB REMOVE",
+    "val_nochange": "Rang GOSB NO CHANGE",
+    "val_up":       "Rang GOSB UP",
+    "val_down":     "Rang GOSB DOWN"
 }
 
 # === ФУНКЦИИ ПРЕОБРАЗОВАНИЯ ===
