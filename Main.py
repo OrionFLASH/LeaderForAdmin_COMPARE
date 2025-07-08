@@ -9,55 +9,58 @@ from comparer import make_compare_sheet
 import pandas as pd
 import os
 from datetime import datetime
+from openpyxl.styles import PatternFill, Font
+
 
 def add_smart_table(writer, df, sheet_name, table_name):
-    worksheet = writer.sheets[sheet_name]
-    (nrows, ncols) = df.shape
-    if nrows == 0:
-        return
-    col_letters = []
-    for i in range(ncols):
-        first = i // 26
-        second = i % 26
-        if first == 0:
-            col_letters.append(chr(65 + second))
-        else:
-            col_letters.append(chr(65 + first - 1) + chr(65 + second))
-    last_col = col_letters[-1]
-    excel_range = f"A1:{last_col}{nrows+1}"
-    worksheet.add_table(excel_range, {
-        'name': table_name,
-        'columns': [{'header': col} for col in df.columns],
-        'style': 'TableStyleMedium9',
-    })
+    # Записываем DataFrame на лист
+    df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # Дальнейшее работает только для openpyxl
+    try:
+        worksheet = writer.sheets[sheet_name]
+        from openpyxl.utils import get_column_letter
+        from openpyxl.styles import Font
+
+        # Сделать заголовок жирным
+        for cell in next(worksheet.iter_rows(min_row=1, max_row=1)):
+            cell.font = Font(bold=True)
+
+        # Автоширина столбцов по максимальной длине значения в каждом столбце
+        for i, column in enumerate(df.columns, 1):
+            max_length = max(
+                df[column].astype(str).map(len).max(),
+                len(str(column))
+            )
+            worksheet.column_dimensions[get_column_letter(i)].width = max_length + 2
+
+    except Exception as e:
+        # В других движках (xlsxwriter) или при ошибке просто пропустить
+        pass
+
 
 def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns):
     worksheet = writer.sheets[sheet_name]
-    dark_bg = {"#383838", "#222222"}
+    dark_bg = {"383838", "222222"}  # без #
     # Собираем статусы, которым нужен белый шрифт
     statuses_with_white_font = set()
     for status, color in status_color_map.items():
-        if color.lower() in dark_bg:
+        color_clean = color.lstrip('#').lower()
+        if color_clean in dark_bg:
             statuses_with_white_font.add(status)
     for col_name in status_columns:
         if col_name not in df.columns:
             continue
-        col_idx = df.columns.get_loc(col_name)
-        if col_idx < 26:
-            col_letter = chr(65 + col_idx)
-        else:
-            col_letter = chr(65 + col_idx // 26 - 1) + chr(65 + col_idx % 26)
-        cell_range = f"{col_letter}2:{col_letter}{len(df)+1}"
-        for status, color in status_color_map.items():
-            fmt = writer.book.add_format({'bg_color': color})
-            if status in statuses_with_white_font:
-                fmt.set_font_color("#FFFFFF")
-            worksheet.conditional_format(cell_range, {
-                'type':     'text',
-                'criteria': 'containing',
-                'value':    status,
-                'format':   fmt
-            })
+        col_idx = df.columns.get_loc(col_name) + 1  # openpyxl columns: 1-based
+        for row_idx, value in enumerate(df[col_name], 2):  # 2 = первая строка данных (после заголовка)
+            status = str(value)
+            color = status_color_map.get(status)
+            if color:
+                color_clean = color.lstrip('#')
+                cell = worksheet.cell(row=row_idx, column=col_idx)
+                cell.fill = PatternFill(fill_type='solid', fgColor=color_clean)
+                if status in statuses_with_white_font:
+                    cell.font = Font(color="FFFFFF")
 
 def log_data_stats(df, label):
     if df.empty:
@@ -87,7 +90,7 @@ def log_compare_stats(compare_df):
 
 def add_status_legend(writer, status_colors, status_ru_dict, status_rating_category, sheet_name="STATUS_LEGEND"):
     """
-    Добавляет лист Excel с легендой по статусам.
+    Добавляет лист Excel с легендой по статусам (openpyxl-версия).
     """
     rows = []
     for key, eng_status in status_rating_category.items():
@@ -102,16 +105,19 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
     legend_df = pd.DataFrame(rows)
     legend_df = legend_df[["Status code", "Статус (рус)", "Excel fill color", "Комментарий"]]
     legend_df.to_excel(writer, index=False, sheet_name=sheet_name)
+
     worksheet = writer.sheets[sheet_name]
-    for i, row in legend_df.iterrows():
-        fmt = writer.book.add_format({'bg_color': row["Excel fill color"]})
-        # Белый шрифт для темного
-        if row["Excel fill color"].lower() == "#383838":
-            fmt.set_font_color("#FFFFFF")
-        worksheet.write(i+1, 0, row["Status code"])
-        worksheet.write(i+1, 1, row["Статус (рус)"])
-        worksheet.write(i+1, 2, row["Excel fill color"], fmt)
-        worksheet.write(i+1, 3, row["Комментарий"])
+    # Обработка цветного оформления
+    for row_idx, row in enumerate(legend_df.itertuples(index=False), start=2):  # start=2 — с первой строки данных (после заголовка)
+        color = str(row[2])  # "Excel fill color"
+        color_clean = color.lstrip("#")
+        cell = worksheet.cell(row=row_idx, column=3)  # 3-я колонка — Excel fill color
+
+        # Фон ячейки
+        cell.fill = PatternFill(fill_type="solid", fgColor=color_clean)
+        # Белый шрифт для темного (можете добавить свои коды)
+        if color_clean.lower() in {"383838", "222222", "000000"}:
+            cell.font = Font(color="FFFFFF")
 
 def main():
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
@@ -160,7 +166,7 @@ def main():
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(TARGET_DIR, result_excel_ts)
 
-    with pd.ExcelWriter(out_excel, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(out_excel, engine='openpyxl') as writer:
         logger.info(f"[MAIN] Экспортируем BEFORE лист {sheet_before}")
         df_before.to_excel(writer, index=False, sheet_name=sheet_before)
         add_smart_table(writer, df_before, sheet_before, "SMART_" + sheet_before)
