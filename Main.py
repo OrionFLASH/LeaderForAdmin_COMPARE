@@ -10,9 +10,16 @@ SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JS
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 LOG_BASENAME = "LOG1"
-BEFORE_FILENAME = "LFA_7.json"
-AFTER_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
+BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
+AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
+
+# === PATCH: список турниров, которые надо анализировать ===
+ALLOWED_TOURNAMENT_IDS = [
+    "t_01_2025-1_14-1_1_3051", "t_01_2025-1_14-1_1_3061"
+    # "t_01_2025-1_05-1_1_3021", "t_02_2025-1_05-1_1_3022"
+    # Если оставить пустым, то анализируются все турниры.
+]
 
 # Структура колонок
 PRIORITY_COLS = [
@@ -502,6 +509,60 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         ] + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
         compare_df = compare_df.reindex(columns=final_cols)
         logging.info(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
+        # === PATCH: ЛОГИРОВАНИЕ перед фильтрацией ===
+        logging.info(f"[COMPARE] Строк до фильтрации по турнирам: {len(compare_df)}")
+        logging.info(f"Уникальных турниров: {compare_df['tournamentId'].nunique()}")
+        logging.info(f"Список турниров: {compare_df['tournamentId'].unique()[:10]}")
+        # Если файл большой, логируем только часть уникальных id
+
+        # === PATCH: Фильтрация по списку турниров ===
+        if ALLOWED_TOURNAMENT_IDS:
+            compare_df = compare_df[compare_df['tournamentId'].isin(ALLOWED_TOURNAMENT_IDS)]
+            logging.info(f"[COMPARE] После фильтрации по ALLOWED_TOURNAMENT_IDS осталось строк: {len(compare_df)}")
+
+        # === PATCH: определяем статусные колонки (ВАЖНО!) ===
+        # Ниже — ваши реальные имена статусных колонок!
+        status_cols = [
+            'indicatorValue_Compare',
+            'divisionRatings_BANK_placeInRating_Compare',
+            'divisionRatings_TB_placeInRating_Compare',
+            'divisionRatings_GOSB_placeInRating_Compare',
+            'divisionRatings_BANK_ratingCategoryName_Compare',
+            'divisionRatings_TB_ratingCategoryName_Compare',
+            'divisionRatings_GOSB_ratingCategoryName_Compare'
+        ]
+        # Проверим, что эти колонки есть
+        for col in status_cols:
+            if col not in compare_df.columns:
+                logging.warning(f"[COMPARE] Нет колонки {col} в compare_df!")
+
+        # === PATCH: фильтрация строк без изменений ===
+        def is_only_nochange(row):
+            for col in status_cols:
+                val = str(row.get(col, "")).strip()
+                if not (
+                        val == "" or
+                        val == "PRIZE_UNCHANGED" or
+                        val == "No Change" or
+                        val == "STAYED_OUT" or
+                        (val.startswith("Rang") and "NO CHANGE" in val)
+                ):
+                    return False
+            return True
+
+        mask = ~compare_df.apply(is_only_nochange, axis=1)
+        compare_df = compare_df[mask].reset_index(drop=True)
+
+        logging.info(f"[COMPARE] После удаления строк без изменений осталось: {len(compare_df)}")
+        # Для отладки — выводим статистику по статусам:
+        try:
+            stats = {}
+            for col in status_cols:
+                stats[col] = dict(compare_df[col].value_counts())
+            logging.info(f"[COMPARE] Статистика по статусным колонкам: {stats}")
+        except Exception as ex:
+            logging.warning(f"[COMPARE] Не удалось вывести статистику по статусам: {ex}")
+
         return compare_df, sheet_name
     except Exception as ex:
         logging.error(f"Ошибка в make_compare_sheet: {ex}")
