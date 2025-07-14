@@ -16,6 +16,7 @@ RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
 # === PATCH: список турниров, которые надо анализировать ===
 ALLOWED_TOURNAMENT_IDS = [
+    "TOURNAMENT_91_01", "TOURNAMENT_92_01", "TOURNAMENT_93_01", "TOURNAMENT_94_01", "TOURNAMENT_95_01", "TOURNAMENT_96_01"
     # "t_01_2025-1_05-1_1_3021", "t_02_2025-1_05-1_1_3022"
     # Если оставить пустым, то анализируются все турниры.
 ]
@@ -680,6 +681,74 @@ def log_compare_stats(compare_df):
             counts = compare_df[col].value_counts(dropna=False).to_dict()
             logging.info(f"[COMPARE] {col}: {counts}")
 
+from datetime import datetime
+
+def build_final_sheet(compare_df, allowed_ids, out_prefix, category_rank_map, log=logging):
+    """
+    Формирует финальную кросс-таблицу по всем сотрудникам и турнирам:
+    - строки: уникальные сотрудники (employeeNumber, lastName, firstName)
+    - колонки: tournamentId
+    - значение: min по рейтингу из BANK/TB/GOSB Compare-колонок; если нет — "Not_used"
+    """
+    log.info("=== [FINAL] Построение итоговой сводной таблицы ===")
+
+    # 1. Собрать список турниров для колонок
+    if allowed_ids:
+        tournaments = list(allowed_ids)
+        log.info(f"[FINAL] ALLOWED_TOURNAMENT_IDS задан: {tournaments}")
+    else:
+        tournaments = sorted(compare_df['tournamentId'].dropna().unique())
+        log.info(f"[FINAL] Турниры (все из данных): {tournaments}")
+
+    # 2. Собрать список уникальных сотрудников
+    emp_cols = ['employeeNumber', 'lastName', 'firstName']
+    employees = compare_df[emp_cols].drop_duplicates().sort_values(emp_cols)
+    log.info(f"[FINAL] Уникальных сотрудников: {len(employees)}")
+
+    # 3. Подготовить структуру итоговой таблицы
+    result_rows = []
+    for _, emp in employees.iterrows():
+        row = {col: emp[col] for col in emp_cols}
+        for t_id in tournaments:
+            # Отфильтровать все записи этого сотрудника по этому турниру
+            mask = (
+                (compare_df['employeeNumber'] == emp['employeeNumber']) &
+                (compare_df['tournamentId'] == t_id)
+            )
+            subset = compare_df[mask]
+            # Собрать значения трех Compare-полей
+            candidates = []
+            for col in [
+                'divisionRatings_BANK_ratingCategoryName_Compare',
+                'divisionRatings_TB_ratingCategoryName_Compare',
+                'divisionRatings_GOSB_ratingCategoryName_Compare'
+            ]:
+                val = subset[col].values[0] if len(subset) else None
+                if val and str(val).strip() and str(val).strip().upper() not in ['NONE', 'NULL', '']:
+                    candidates.append(val)
+            # Если есть варианты — выбрать с наименьшим CATEGORY_RANK_MAP (меньше — лучше)
+            best_val = None
+            best_rank = float('inf')
+            for v in candidates:
+                rank = category_rank_map.get(v, 99)
+                if rank < best_rank:
+                    best_val = v
+                    best_rank = rank
+            # Если ничего не выбрано — ставим Not_used
+            final_value = best_val if best_val is not None else "Not_used"
+            row[t_id] = final_value
+            # Логирование выбора
+            log.debug(
+                f"[FINAL] {emp['employeeNumber']} {t_id} => "
+                f"candidates={candidates}, selected={final_value}, best_rank={best_rank}"
+            )
+        result_rows.append(row)
+
+    # 4. Сформировать DataFrame
+    final_df = pd.DataFrame(result_rows)
+    log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
+    return final_df, tournaments
+
 def main():
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
 
@@ -721,6 +790,11 @@ def main():
         df_before, df_after, sheet_compare
     )
 
+    # Построение финального листа (FINAL)
+    final_df, tournaments = build_final_sheet(
+        compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP
+    )
+    final_status_cols = tournaments
     log_compare_stats(compare_df)
 
     base, ext = os.path.splitext(RESULT_EXCEL)
@@ -737,6 +811,18 @@ def main():
         logger.info(f"[MAIN] Экспортируем COMPARE лист {sheet_compare}")
         compare_df.to_excel(writer, index=False, sheet_name=sheet_compare)
         add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare)
+        logger.info(f"[MAIN] Экспортируем FINAL лист FINAL_{ts}")
+        final_df.to_excel(writer, index=False, sheet_name="FINAL_" + ts)
+
+        apply_status_colors(
+            writer,
+            final_df,
+            "FINAL_" + ts,
+            STATUS_COLORS_DICT,
+            final_status_cols
+        )
+        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL_{ts}")
+
         apply_status_colors(
             writer,
             compare_df,
@@ -744,8 +830,10 @@ def main():
             STATUS_COLORS_DICT,
             STATUS_COLOR_COLUMNS
         )
+        logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE_{ts}")
         add_status_legend(writer, STATUS_COLORS_DICT, STATUS_RU_DICT, STATUS_RATING_CATEGORY, sheet_name="STATUS_LEGEND")
         logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")
+
 
 if __name__ == "__main__":
     main()
