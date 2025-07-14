@@ -657,21 +657,6 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
         if color_clean.lower() in {"383838", "222222", "000000"}:
             cell.font = Font(color="FFFFFF")
 
-def log_data_stats(df, label):
-    import logging
-    if df.empty:
-        logging.info(f"[{label}] DataFrame пустой.")
-        return
-    n_rows = len(df)
-    n_cols = len(df.columns)
-    tournament_counts = df['tournamentId'].value_counts().to_dict()
-    unique_tids = list(df['tournamentId'].unique())
-    logging.info(f"[{label}] строк: {n_rows}, колонок: {n_cols}")
-    logging.info(f"[{label}] tournamentId всего: {len(unique_tids)} -> {unique_tids}")
-    for tid in unique_tids:
-        count = tournament_counts.get(tid, 0)
-        logging.info(f"[{label}] tournamentId={tid}: людей={count}")
-    logging.info(f"[{label}] Все поля: {list(df.columns)}")
 
 def log_compare_stats(compare_df):
     import logging
