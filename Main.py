@@ -1,77 +1,213 @@
-from config import (
-    SOURCE_DIR, TARGET_DIR, BEFORE_FILENAME, AFTER_FILENAME,
-    RESULT_EXCEL, PRIORITY_COLS, LOG_BASENAME, LOG_DIR,
-    STATUS_COLORS_DICT, STATUS_COLOR_COLUMNS, STATUS_RU_DICT, STATUS_RATING_CATEGORY
-)
-from logging_utils import setup_logger
-from json_loader import process_json_file
-from comparer import make_compare_sheet
+import os
+import json
 import pandas as pd
+import re
+import logging
+from datetime import datetime
+
+# Пути
+SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
+TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
+LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
+LOG_BASENAME = "LOG1"
+BEFORE_FILENAME = "LFA_7.json"
+AFTER_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
+RESULT_EXCEL = "LFA_COMPARE.xlsx"
+
+# Структура колонок
+PRIORITY_COLS = [
+    'SourceFile', 'tournamentId', 'employeeNumber', 'lastName', 'firstName',
+    'terDivisionName', 'divisionRatings_BANK_groupId', 'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId', 'employeeStatus', 'businessBlock',
+    'successValue', 'indicatorValue', 'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating', 'divisionRatings_GOSB_placeInRating',
+    'divisionRatings_BANK_ratingCategoryName', 'divisionRatings_TB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName',
+]
+COMPARE_KEYS = [
+    'tournamentId',
+    'employeeNumber',
+    'lastName',
+    'firstName',
+]
+COMPARE_FIELDS = [
+    'SourceFile',
+    'terDivisionName',
+    'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId',
+    'indicatorValue',
+    'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating',
+    'divisionRatings_GOSB_placeInRating',
+    'divisionRatings_BANK_ratingCategoryName',
+    'divisionRatings_TB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName',
+]
+INT_FIELDS = [
+    'divisionRatings_BANK_groupId',
+    'divisionRatings_TB_groupId',
+    'divisionRatings_GOSB_groupId',
+    'divisionRatings_BANK_placeInRating',
+    'divisionRatings_TB_placeInRating',
+    'divisionRatings_GOSB_placeInRating',
+]
+FLOAT_FIELDS = [
+    'indicatorValue',
+    'successValue',
+]
+
+# --- Все цвета статусов здесь ---
+STATUS_COLORS_DICT = {
+    'No Change':        '#BFBFBF',  # Серый
+    'Rang BANK NO CHANGE': '#BFBFBF',
+    'Rang TB NO CHANGE':   '#BFBFBF',
+    'Rang GOSB NO CHANGE': '#BFBFBF',
+    'Change UP':        '#C6EFCE',  # Светло-зелёный
+    'Rang BANK UP':     '#C6EFCE',
+    'Rang TB UP':       '#C6EFCE',
+    'Rang GOSB UP':     '#C6EFCE',
+    'Change DOWN':      '#FFC7CE',  # Светло-красный
+    'Rang BANK DOWN':   '#FFC7CE',
+    'Rang TB DOWN':     '#FFC7CE',
+    'Rang GOSB DOWN':   '#FFC7CE',
+    'New ADD':          '#E2EFDA',  # Бледно-зелёный
+    'Rang BANK NEW':    '#E2EFDA',
+    'Rang TB NEW':      '#E2EFDA',
+    'Rang GOSB NEW':    '#E2EFDA',
+    'Remove FROM':      '#383838',  # Темно-серый, ещё темнее
+    'Rang BANK REMOVE': '#383838',
+    'Rang TB REMOVE':   '#383838',
+    'Rang GOSB REMOVE': '#383838',
+    'Remove':           '#383838',
+    'New':              '#E2EFDA',
+
+    # Для призовых (категорий)
+    "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
+    "STAYED_OUT":       '#BFBFBF',   # Серый (остался вне призёров)
+    "DROPPED_OUT_PRIZE":'#FF0000',   # Красный (выбыл из призёров)
+    "LOST_VIEW":        '#383838',   # Темно-серый (пропал из вида)
+    "PRIZE_UNCHANGED":  '#C6EFCE',   # Светло-зелёный (призёр без изменений)
+    "PRIZE_UP":         '#00B050',   # Зеленый (улучшил место)
+    "PRIZE_DOWN":       '#FFC7CE',   # Светло-красный (понизился)
+}
+
+# Какие колонки раскрашивать (для передачи в apply_status_colors)
+STATUS_COLOR_COLUMNS = [
+    'indicatorValue_Compare',
+    'divisionRatings_BANK_placeInRating_Compare',
+    'divisionRatings_TB_placeInRating_Compare',
+    'divisionRatings_GOSB_placeInRating_Compare',
+    'divisionRatings_BANK_ratingCategoryName_Compare',
+    'divisionRatings_TB_ratingCategoryName_Compare',
+    'divisionRatings_GOSB_ratingCategoryName_Compare'
+]
+
+# --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
+STATUS_RU_DICT = {
+    "ENTERED_PRIZE":      ("ПОПАЛ В ПРИЗЁРЫ", "Был вне призёров, стал призёром. Это хорошо."),
+    "STAYED_OUT":         ("ОСТАЛСЯ ВНЕ ПРИЗЁРОВ", "Не был призёром и не стал. Без изменений, но не лучший результат."),
+    "DROPPED_OUT_PRIZE":  ("ВЫБЫЛ ИЗ ПРИЗЁРОВ", "Был призёром, стал вне призёров. Это плохо."),
+    "LOST_VIEW":          ("ПРОПАЛ ИЗ ВИДА", "Был призёром, теперь отсутствует в итоговом файле."),
+    "PRIZE_UNCHANGED":    ("ПРИЗЁР БЕЗ ИЗМЕНЕНИЙ", "Был призёром, остался на том же месте."),
+    "PRIZE_UP":           ("УЛУЧШИЛ ПРИЗОВОЕ МЕСТО", "Был призёром и стал лучше (например, с бронзы на золото)."),
+    "PRIZE_DOWN":         ("ПОНИЗИЛСЯ В РЕЙТИНГЕ ПРИЗЁРОВ", "Был призёром и опустился на худшее призовое место."),
+}
+
+# Статусы для сравнения (логика и сокращения)
+STATUS_NEW_REMOVE = {
+    "both":        "No Change",
+    "before_only": "Remove",
+    "after_only":  "New"
+}
+STATUS_INDICATOR = {
+    "val_add":      "New ADD",
+    "val_remove":   "Remove FROM",
+    "val_nochange": "No Change",
+    "val_down":     "Change DOWN",
+    "val_up":       "Change UP"
+}
+STATUS_BANK_PLACE = {
+    "val_add":      "Rang BANK NEW",
+    "val_remove":   "Rang BANK REMOVE",
+    "val_nochange": "Rang BANK NO CHANGE",
+    "val_up":       "Rang BANK UP",
+    "val_down":     "Rang BANK DOWN"
+}
+STATUS_TB_PLACE = {
+    "val_add":      "Rang TB NEW",
+    "val_remove":   "Rang TB REMOVE",
+    "val_nochange": "Rang TB NO CHANGE",
+    "val_up":       "Rang TB UP",
+    "val_down":     "Rang TB DOWN"
+}
+STATUS_GOSB_PLACE = {
+    "val_add":      "Rang GOSB NEW",
+    "val_remove":   "Rang GOSB REMOVE",
+    "val_nochange": "Rang GOSB NO CHANGE",
+    "val_up":       "Rang GOSB UP",
+    "val_down":     "Rang GOSB DOWN"
+}
+CATEGORY_RANK_MAP = {
+    "Вы в лидерах": 1,
+    "Серебро": 2,
+    "Бронза": 3,
+    "Нужно поднажать": 4,
+    "": 4,
+    None: 4
+}
+STATUS_RATING_CATEGORY = {
+    "in2prize": "ENTERED_PRIZE",
+    "stay_out": "STAYED_OUT",
+    "from2out": "DROPPED_OUT_PRIZE",
+    "lost":     "LOST_VIEW",
+    "same":     "PRIZE_UNCHANGED",
+    "up":       "PRIZE_UP",
+    "down":     "PRIZE_DOWN",
+}
+
+import logging
 import os
 from datetime import datetime
-from openpyxl.styles import PatternFill, Font
 
-
-def add_smart_table(writer, df, sheet_name, table_name):
-    # Записываем DataFrame на лист
-    df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    # Дальнейшее работает только для openpyxl
-    try:
-        worksheet = writer.sheets[sheet_name]
-        from openpyxl.utils import get_column_letter
-        from openpyxl.styles import Font
-
-        # Сделать заголовок жирным
-        for cell in next(worksheet.iter_rows(min_row=1, max_row=1)):
-            cell.font = Font(bold=True)
-
-        # Автоширина столбцов по максимальной длине значения в каждом столбце
-        for i, column in enumerate(df.columns, 1):
-            max_length = max(
-                df[column].astype(str).map(len).max(),
-                len(str(column))
-            )
-            worksheet.column_dimensions[get_column_letter(i)].width = max_length + 2
-
-    except Exception as e:
-        # В других движках (xlsxwriter) или при ошибке просто пропустить
-        pass
-
-
-def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns):
-    worksheet = writer.sheets[sheet_name]
-    dark_bg = {"383838", "222222"}  # без #
-    # Собираем статусы, которым нужен белый шрифт
-    statuses_with_white_font = set()
-    for status, color in status_color_map.items():
-        color_clean = color.lstrip('#').lower()
-        if color_clean in dark_bg:
-            statuses_with_white_font.add(status)
-    for col_name in status_columns:
-        if col_name not in df.columns:
-            continue
-        col_idx = df.columns.get_loc(col_name) + 1  # openpyxl columns: 1-based
-        for row_idx, value in enumerate(df[col_name], 2):  # 2 = первая строка данных (после заголовка)
-            status = str(value)
-            color = status_color_map.get(status)
-            if color:
-                color_clean = color.lstrip('#')
-                cell = worksheet.cell(row=row_idx, column=col_idx)
-                cell.fill = PatternFill(fill_type='solid', fgColor=color_clean)
-                if status in statuses_with_white_font:
-                    cell.font = Font(color="FFFFFF")
+def setup_logger(log_dir, basename):
+    """
+    Создаёт логгер, который пишет и в файл (append, по дате), и в консоль.
+    log_dir: путь к папке для логов
+    basename: имя (без даты) для лог-файла
+    """
+    now = datetime.now()
+    day_str = now.strftime("%Y%m%d")
+    time_str = now.strftime("%H:%M:%S")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, f"{basename}_{day_str}.log")
+    # Добавляем маркер начала новой сессии
+    with open(log_path, "a", encoding="utf-8") as logf:
+        logf.write(f"\n-------- NEW LOG START AT {day_str} ({time_str}) -------\n")
+    # Стандартное подключение логгера
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    fh = logging.FileHandler(log_path, encoding='utf-8', mode='a')
+    fh.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    fmt = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', "%Y-%m-%d %H:%M:%S")
+    fh.setFormatter(fmt)
+    ch.setFormatter(fmt)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+    logging.info(f"Лог-файл активен (append): {log_path}")
+    return logger
 
 def log_data_stats(df, label):
     if df.empty:
-        import logging
         logging.info(f"[{label}] DataFrame пустой.")
         return
     n_rows = len(df)
     n_cols = len(df.columns)
     tournament_counts = df['tournamentId'].value_counts().to_dict()
     unique_tids = list(df['tournamentId'].unique())
-    import logging
     logging.info(f"[{label}] строк: {n_rows}, колонок: {n_cols}")
     logging.info(f"[{label}] tournamentId всего: {len(unique_tids)} -> {unique_tids}")
     for tid in unique_tids:
@@ -80,13 +216,351 @@ def log_data_stats(df, label):
     logging.info(f"[{label}] Все поля: {list(df.columns)}")
 
 def log_compare_stats(compare_df):
-    import logging
     n_rows = len(compare_df)
     logging.info(f"[COMPARE] Строк всего: {n_rows}")
     for col in STATUS_COLOR_COLUMNS:
         if col in compare_df.columns:
             counts = compare_df[col].value_counts(dropna=False).to_dict()
             logging.info(f"[COMPARE] {col}: {counts}")
+
+
+import re
+
+def parse_float(val, context=None):
+    try:
+        if val is None or (isinstance(val, str) and val.strip().lower() in {'', 'none', 'null'}):
+            return None
+        if isinstance(val, (int, float)):
+            return round(float(val), 3)
+        s = str(val)
+        s = re.sub(r'[\s\u00A0\u2009]', '', s)
+        s = re.sub(r"[^\d.,\-]", "", s)
+        if s.count(',') > 0 and s.count('.') > 0:
+            if s.rfind('.') > s.rfind(','):
+                s = s.replace(',', '')
+            else:
+                s = s.replace('.', '').replace(',', '.')
+        else:
+            s = s.replace(',', '.')
+        return round(float(s), 3)
+    except Exception as ex:
+        logging.error(
+            f"[parse_float] Ошибка преобразования '{val}' в float: {ex} | Context: {context}"
+        )
+        return None
+
+def parse_int(val, context=None):
+    try:
+        if val is None or (isinstance(val, str) and val.strip().lower() in {'', 'none', 'null'}):
+            return None
+        if isinstance(val, int):
+            return val
+        s = str(val)
+        s = re.sub(r'[\s\u00A0\u2009]', '', s)
+        s = re.sub(r"[^\d\-]", "", s)
+        return int(s)
+    except Exception as ex:
+        logging.error(
+            f"[parse_int] Ошибка преобразования '{val}' в int: {ex} | Context: {context}"
+        )
+        return None
+
+def flatten_leader(leader, tournament_id, source_file):
+    context = f"файл={source_file}, турнир={tournament_id}, employee={leader.get('employeeNumber', 'N/A')}"
+    row = {
+        'SourceFile': source_file,
+        'tournamentId': tournament_id
+    }
+    for k, v in leader.items():
+        if k in ("divisionRatings", "photoData"):
+            continue
+        if k in FLOAT_FIELDS:
+            row[k] = parse_float(v, context)
+        else:
+            row[k] = v
+    # divisionRatings
+    if "divisionRatings" in leader and leader["divisionRatings"]:
+        for div in leader["divisionRatings"]:
+            group = div.get("groupCode")
+            if not group:
+                continue
+            for field in ("groupId", "placeInRating", "ratingCategoryName"):
+                colname = f"divisionRatings_{group}_{field}"
+                if field in div:
+                    value = div[field]
+                    if colname in INT_FIELDS:
+                        row[colname] = parse_int(value, context)
+                    elif colname in FLOAT_FIELDS:
+                        row[colname] = parse_float(value, context)
+                    else:
+                        row[colname] = value
+    for f in FLOAT_FIELDS:
+        if f not in row:
+            row[f] = None
+    for f in INT_FIELDS:
+        if f not in row:
+            row[f] = None
+    return row
+
+def process_json_file(filepath):
+    filename = os.path.basename(filepath)
+    rows = []
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            js = json.load(f)
+    except Exception as ex:
+        logging.error(f"Ошибка загрузки файла {filepath}: {ex}")
+        return []
+    # Перебор турниров
+    for tournament_key, records in js.items():
+        # Универсальная обработка: dict, list, str, None
+        entries = []
+        if isinstance(records, list):
+            entries = records
+        elif isinstance(records, dict):
+            entries = [records]
+        else:
+            logging.warning(f"[process_json_file] Некорректная запись в турнире {tournament_key}: {repr(records)[:100]}")
+            continue
+        for record in entries:
+            try:
+                if not isinstance(record, dict):
+                    logging.warning(f"[process_json_file] Некорректная запись в турнире {tournament_key}: {repr(record)[:100]}")
+                    continue
+                tournament = record.get("body", {}).get("tournament", {})
+                tournament_id = tournament.get("tournamentId", tournament_key)
+                leaders = tournament.get("leaders", [])
+                if isinstance(leaders, dict):
+                    leaders = list(leaders.values())
+                elif not isinstance(leaders, list):
+                    leaders = []
+                # === Обработка случая с пустым leaders ===
+                if not leaders:
+                    stub = {
+                        'SourceFile': filename,
+                        'tournamentId': tournament_id,
+                        'employeeNumber': '00000000',
+                        'lastName': 'None',
+                        'firstName': 'None'
+                    }
+                    for field in FLOAT_FIELDS + INT_FIELDS:
+                        stub[field] = None
+                    rows.append(stub)
+                    logging.info(f'Турнир {tournament_id} из файла {filename}: leaders пуст, добавлена заглушка')
+                    continue
+                # === Обработка нормальных лидеров ===
+                for leader in leaders:
+                    try:
+                        row = flatten_leader(leader, tournament_id, filename)
+                        rows.append(row)
+                    except Exception as ex:
+                        logging.error(
+                            f"[flatten_leader] Ошибка обработки лидера в файле {filename} "
+                            f"турнир {tournament_id} employee {leader.get('employeeNumber', 'N/A')}: {ex}"
+                        )
+            except Exception as ex:
+                logging.error(
+                    f"[process_json_file] Ошибка обработки записи в файле {filename}, турнир {tournament_key}: {ex}"
+                )
+    return rows
+
+def load_json_folder(folder):
+    all_rows = []
+    for fname in os.listdir(folder):
+        if fname.lower().endswith('.json'):
+            path = os.path.join(folder, fname)
+            all_rows.extend(process_json_file(path))
+    if not all_rows:
+        logging.warning(f'Нет данных для экспорта из папки {folder}')
+        return pd.DataFrame()
+    df = pd.DataFrame(all_rows)
+    return df
+
+def make_compare_sheet(df_before, df_after, sheet_name):
+    try:
+        join_keys = COMPARE_KEYS
+        before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
+        after_uniq  = df_after.drop_duplicates(subset=join_keys, keep='last')
+        all_keys = pd.concat([before_uniq[join_keys], after_uniq[join_keys]]).drop_duplicates()
+        before_uniq = before_uniq.set_index(join_keys)
+        after_uniq  = after_uniq.set_index(join_keys)
+        before_uniq = before_uniq[COMPARE_FIELDS] if len(before_uniq) else pd.DataFrame(columns=COMPARE_FIELDS)
+        after_uniq  = after_uniq[COMPARE_FIELDS]  if len(after_uniq) else pd.DataFrame(columns=COMPARE_FIELDS)
+        before_uniq = before_uniq.add_prefix('BEFORE_')
+        after_uniq  = after_uniq.add_prefix('AFTER_')
+        compare_df = all_keys.set_index(join_keys) \
+            .join(before_uniq, how='left') \
+            .join(after_uniq, how='left') \
+            .reset_index()
+
+        # New_Remove
+        def new_remove_row(row):
+            before_exist = not pd.isnull(row['BEFORE_indicatorValue']) or not pd.isnull(row['BEFORE_SourceFile'])
+            after_exist  = not pd.isnull(row['AFTER_indicatorValue'])  or not pd.isnull(row['AFTER_SourceFile'])
+            if before_exist and after_exist:
+                return STATUS_NEW_REMOVE['both']
+            elif before_exist:
+                return STATUS_NEW_REMOVE['before_only']
+            elif after_exist:
+                return STATUS_NEW_REMOVE['after_only']
+            else:
+                return ""
+        compare_df['New_Remove'] = compare_df.apply(new_remove_row, axis=1)
+
+        # indicatorValue_Compare
+        def value_compare(row):
+            before = row.get('BEFORE_indicatorValue', None)
+            after  = row.get('AFTER_indicatorValue', None)
+            if pd.isnull(before) and not pd.isnull(after):
+                return STATUS_INDICATOR['val_add']
+            if not pd.isnull(before) and pd.isnull(after):
+                return STATUS_INDICATOR['val_remove']
+            if pd.isnull(before) and pd.isnull(after):
+                return ""
+            if before == after:
+                return STATUS_INDICATOR['val_nochange']
+            elif before > after:
+                return STATUS_INDICATOR['val_down']
+            else:
+                return STATUS_INDICATOR['val_up']
+        compare_df['indicatorValue_Compare'] = compare_df.apply(value_compare, axis=1)
+
+        def rang_compare(row, before_col, after_col, status_dict):
+            before = row.get(f'BEFORE_{before_col}', None)
+            after  = row.get(f'AFTER_{after_col}', None)
+            if pd.isnull(before) and not pd.isnull(after):
+                return status_dict['val_add']
+            if not pd.isnull(before) and pd.isnull(after):
+                return status_dict['val_remove']
+            if pd.isnull(before) and pd.isnull(after):
+                return ""
+            if before == after:
+                return status_dict['val_nochange']
+            elif before > after:
+                return status_dict['val_up']
+            else:
+                return status_dict['val_down']
+
+        compare_df['divisionRatings_BANK_placeInRating_Compare'] = compare_df.apply(
+            lambda row: rang_compare(row, 'divisionRatings_BANK_placeInRating', 'divisionRatings_BANK_placeInRating', STATUS_BANK_PLACE), axis=1)
+        compare_df['divisionRatings_TB_placeInRating_Compare'] = compare_df.apply(
+            lambda row: rang_compare(row, 'divisionRatings_TB_placeInRating', 'divisionRatings_TB_placeInRating', STATUS_TB_PLACE), axis=1)
+        compare_df['divisionRatings_GOSB_placeInRating_Compare'] = compare_df.apply(
+            lambda row: rang_compare(row, 'divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating', STATUS_GOSB_PLACE), axis=1)
+
+        # ratingCategoryName сравнение с логикой "меньше — лучше"
+        def category_rank(cat):
+            return CATEGORY_RANK_MAP.get(cat, 4)  # если неизвестно — вне призовых
+
+        def category_compare(before_cat, after_cat):
+            b_rank = category_rank(before_cat)
+            a_rank = category_rank(after_cat)
+            # 1) Не был в призовых или не было вообще, но попал в призовые - "ENTERED_PRIZE"
+            if b_rank == 4 and a_rank < 4:
+                return STATUS_RATING_CATEGORY["in2prize"]
+            # 2) Не был в призовых - остался вне призовых - "STAYED_OUT"
+            if b_rank == 4 and a_rank == 4:
+                return STATUS_RATING_CATEGORY["stay_out"]
+            # 3) Был в призовых - попал в "нужно поднажать" - "DROPPED_OUT_PRIZE"
+            if b_rank < 4 and a_rank == 4:
+                return STATUS_RATING_CATEGORY["from2out"]
+            # 4) Был в призовых - нет в новом файле - "LOST_VIEW"
+            if b_rank < 4 and (after_cat is None or after_cat == ""):
+                return STATUS_RATING_CATEGORY["lost"]
+            # 5) Призовое место не изменилось - "PRIZE_UNCHANGED"
+            if b_rank == a_rank and b_rank < 4:
+                return STATUS_RATING_CATEGORY["same"]
+            # 6) Призовое место улучшилось (меньше — лучше) - "PRIZE_UP"
+            if b_rank > a_rank and a_rank < 4:
+                return STATUS_RATING_CATEGORY["up"]
+            # 7) Призовое место ухудшилось (меньше — лучше) - "PRIZE_DOWN"
+            if b_rank < a_rank and a_rank < 4:
+                return STATUS_RATING_CATEGORY["down"]
+            # Если ничего не подошло
+            return ""
+
+        # Для каждой категории делаем отдельное поле
+        for group, col in [
+            ('BANK',   'divisionRatings_BANK_ratingCategoryName'),
+            ('TB',     'divisionRatings_TB_ratingCategoryName'),
+            ('GOSB',   'divisionRatings_GOSB_ratingCategoryName'),
+        ]:
+            def cmp_func(row, col=col):
+                before_cat = row.get(f'BEFORE_{col}', None)
+                after_cat  = row.get(f'AFTER_{col}', None)
+                return category_compare(before_cat, after_cat)
+            compare_df[f"{col}_Compare"] = compare_df.apply(cmp_func, axis=1)
+
+        final_cols = COMPARE_KEYS + [
+            'New_Remove', 'indicatorValue_Compare',
+            'divisionRatings_BANK_placeInRating_Compare',
+            'divisionRatings_TB_placeInRating_Compare',
+            'divisionRatings_GOSB_placeInRating_Compare',
+            'divisionRatings_BANK_ratingCategoryName_Compare',
+            'divisionRatings_TB_ratingCategoryName_Compare',
+            'divisionRatings_GOSB_ratingCategoryName_Compare'
+        ] + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
+        compare_df = compare_df.reindex(columns=final_cols)
+        logging.info(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
+        return compare_df, sheet_name
+    except Exception as ex:
+        logging.error(f"Ошибка в make_compare_sheet: {ex}")
+        return pd.DataFrame(), sheet_name
+
+import pandas as pd
+from openpyxl.styles import PatternFill, Font
+
+def add_smart_table(writer, df, sheet_name, table_name):
+    """
+    Экспортирует DataFrame на лист Excel с автоформатированием:
+    - Жирные заголовки
+    - Автоширина столбцов
+    """
+    df.to_excel(writer, sheet_name=sheet_name, index=False)
+    try:
+        worksheet = writer.sheets[sheet_name]
+        from openpyxl.utils import get_column_letter
+
+        # Сделать заголовок жирным
+        for cell in next(worksheet.iter_rows(min_row=1, max_row=1)):
+            cell.font = Font(bold=True)
+
+        # Автоширина столбцов
+        for i, column in enumerate(df.columns, 1):
+            max_length = max(
+                df[column].astype(str).map(len).max(),
+                len(str(column))
+            )
+            worksheet.column_dimensions[get_column_letter(i)].width = max_length + 2
+
+    except Exception:
+        pass  # Для других движков просто пропустить
+
+def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns):
+    """
+    Закрашивает ячейки сравнения в Excel по статусам (openpyxl).
+    """
+    worksheet = writer.sheets[sheet_name]
+    dark_bg = {"383838", "222222"}  # без #
+    # Cтатусы с белым шрифтом
+    statuses_with_white_font = set()
+    for status, color in status_color_map.items():
+        color_clean = color.lstrip('#').lower()
+        if color_clean in dark_bg:
+            statuses_with_white_font.add(status)
+    for col_name in status_columns:
+        if col_name not in df.columns:
+            continue
+        col_idx = df.columns.get_loc(col_name) + 1  # 1-based
+        for row_idx, value in enumerate(df[col_name], 2):  # 2 = первая строка данных
+            status = str(value)
+            color = status_color_map.get(status)
+            if color:
+                color_clean = color.lstrip('#')
+                cell = worksheet.cell(row=row_idx, column=col_idx)
+                cell.fill = PatternFill(fill_type='solid', fgColor=color_clean)
+                if status in statuses_with_white_font:
+                    cell.font = Font(color="FFFFFF")
 
 def add_status_legend(writer, status_colors, status_ru_dict, status_rating_category, sheet_name="STATUS_LEGEND"):
     """
@@ -107,17 +581,39 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
     legend_df.to_excel(writer, index=False, sheet_name=sheet_name)
 
     worksheet = writer.sheets[sheet_name]
-    # Обработка цветного оформления
-    for row_idx, row in enumerate(legend_df.itertuples(index=False), start=2):  # start=2 — с первой строки данных (после заголовка)
+    # Цветное оформление
+    for row_idx, row in enumerate(legend_df.itertuples(index=False), start=2):
         color = str(row[2])  # "Excel fill color"
         color_clean = color.lstrip("#")
         cell = worksheet.cell(row=row_idx, column=3)  # 3-я колонка — Excel fill color
-
-        # Фон ячейки
         cell.fill = PatternFill(fill_type="solid", fgColor=color_clean)
-        # Белый шрифт для темного (можете добавить свои коды)
         if color_clean.lower() in {"383838", "222222", "000000"}:
             cell.font = Font(color="FFFFFF")
+
+def log_data_stats(df, label):
+    import logging
+    if df.empty:
+        logging.info(f"[{label}] DataFrame пустой.")
+        return
+    n_rows = len(df)
+    n_cols = len(df.columns)
+    tournament_counts = df['tournamentId'].value_counts().to_dict()
+    unique_tids = list(df['tournamentId'].unique())
+    logging.info(f"[{label}] строк: {n_rows}, колонок: {n_cols}")
+    logging.info(f"[{label}] tournamentId всего: {len(unique_tids)} -> {unique_tids}")
+    for tid in unique_tids:
+        count = tournament_counts.get(tid, 0)
+        logging.info(f"[{label}] tournamentId={tid}: людей={count}")
+    logging.info(f"[{label}] Все поля: {list(df.columns)}")
+
+def log_compare_stats(compare_df):
+    import logging
+    n_rows = len(compare_df)
+    logging.info(f"[COMPARE] Строк всего: {n_rows}")
+    for col in STATUS_COLOR_COLUMNS:
+        if col in compare_df.columns:
+            counts = compare_df[col].value_counts(dropna=False).to_dict()
+            logging.info(f"[COMPARE] {col}: {counts}")
 
 def main():
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
