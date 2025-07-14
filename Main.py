@@ -16,10 +16,16 @@ RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
 # === PATCH: список турниров, которые надо анализировать ===
 ALLOWED_TOURNAMENT_IDS = [
-    "t_01_2025-1_14-1_1_3051", "t_01_2025-1_14-1_1_3061"
     # "t_01_2025-1_05-1_1_3021", "t_02_2025-1_05-1_1_3022"
     # Если оставить пустым, то анализируются все турниры.
 ]
+
+# Список значений, которые считаются отсутствием изменений для любых статусных полей
+NOCHANGE_STATUSES = [
+    "", "No Change", "STAYED_OUT", "PRIZE_UNCHANGED", "Remove", "Remove FROM", "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
+    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE", "Rang NO CHANGE", "NO_RANK"
+]
+
 
 # Структура колонок
 PRIORITY_COLS = [
@@ -87,6 +93,7 @@ STATUS_COLORS_DICT = {
     'Rang GOSB REMOVE': '#383838',
     'Remove':           '#383838',
     'New':              '#E2EFDA',
+    "NO_RANK":          "#EDEDED",  # Светло-серый цвет (можно взять любой RGB/HEX)
 
     # Для призовых (категорий)
     "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
@@ -138,21 +145,24 @@ STATUS_BANK_PLACE = {
     "val_remove":   "Rang BANK REMOVE",
     "val_nochange": "Rang BANK NO CHANGE",
     "val_up":       "Rang BANK UP",
-    "val_down":     "Rang BANK DOWN"
+    "val_down":     "Rang BANK DOWN",
+    "val_norank":   "NO_RANK"  # добавлено!
 }
 STATUS_TB_PLACE = {
     "val_add":      "Rang TB NEW",
     "val_remove":   "Rang TB REMOVE",
     "val_nochange": "Rang TB NO CHANGE",
     "val_up":       "Rang TB UP",
-    "val_down":     "Rang TB DOWN"
+    "val_down":     "Rang TB DOWN",
+    "val_norank":   "NO_RANK"  # добавлено!
 }
 STATUS_GOSB_PLACE = {
     "val_add":      "Rang GOSB NEW",
     "val_remove":   "Rang GOSB REMOVE",
     "val_nochange": "Rang GOSB NO CHANGE",
     "val_up":       "Rang GOSB UP",
-    "val_down":     "Rang GOSB DOWN"
+    "val_down":     "Rang GOSB DOWN",
+    "val_norank":   "NO_RANK"  # добавлено!
 }
 CATEGORY_RANK_MAP = {
     "Вы в лидерах": 1,
@@ -440,7 +450,7 @@ def make_compare_sheet(df_before, df_after, sheet_name):
             if not pd.isnull(before) and pd.isnull(after):
                 return status_dict['val_remove']
             if pd.isnull(before) and pd.isnull(after):
-                return ""
+                return status_dict.get('val_norank', 'NO_RANK')
             if before == after:
                 return status_dict['val_nochange']
             elif before > after:
@@ -537,20 +547,14 @@ def make_compare_sheet(df_before, df_after, sheet_name):
                 logging.warning(f"[COMPARE] Нет колонки {col} в compare_df!")
 
         # === PATCH: фильтрация строк без изменений ===
-        def is_only_nochange(row):
+        def is_any_change(row):
             for col in status_cols:
                 val = str(row.get(col, "")).strip()
-                if not (
-                        val == "" or
-                        val == "PRIZE_UNCHANGED" or
-                        val == "No Change" or
-                        val == "STAYED_OUT" or
-                        (val.startswith("Rang") and "NO CHANGE" in val)
-                ):
-                    return False
-            return True
+                if val not in NOCHANGE_STATUSES:
+                    return True  # есть отличие!
+            return False  # только статусы из списка — строку УБИРАЕМ
 
-        mask = ~compare_df.apply(is_only_nochange, axis=1)
+        mask = compare_df.apply(is_any_change, axis=1)
         compare_df = compare_df[mask].reset_index(drop=True)
 
         logging.info(f"[COMPARE] После удаления строк без изменений осталось: {len(compare_df)}")
