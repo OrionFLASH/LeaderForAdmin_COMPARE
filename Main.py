@@ -366,6 +366,7 @@ def process_json_file(filepath):
                     rows.append(stub)
                     logging.info(f'Турнир {tournament_id} из файла {filename}: leaders пуст, добавлена заглушка')
                     continue
+
                 # === Обработка нормальных лидеров ===
                 for leader in leaders:
                     try:
