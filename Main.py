@@ -789,16 +789,17 @@ def main():
 
     with pd.ExcelWriter(out_excel, engine='openpyxl') as writer:
         logger.info(f"[MAIN] Экспортируем BEFORE лист {sheet_before}")
-        df_before.to_excel(writer, index=False, sheet_name=sheet_before)
+    #    df_before.to_excel(writer, index=False, sheet_name=sheet_before)
         add_smart_table(writer, df_before, sheet_before, "SMART_" + sheet_before)
         logger.info(f"[MAIN] Экспортируем AFTER лист {sheet_after}")
-        df_after.to_excel(writer, index=False, sheet_name=sheet_after)
+     #   df_after.to_excel(writer, index=False, sheet_name=sheet_after)
         add_smart_table(writer, df_after, sheet_after, "SMART_" + sheet_after)
         logger.info(f"[MAIN] Экспортируем COMPARE лист {sheet_compare}")
-        compare_df.to_excel(writer, index=False, sheet_name=sheet_compare)
+     #   compare_df.to_excel(writer, index=False, sheet_name=sheet_compare)
         add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare)
         logger.info(f"[MAIN] Экспортируем FINAL лист FINAL_{ts}")
-        final_df.to_excel(writer, index=False, sheet_name="FINAL_" + ts)
+      #  final_df.to_excel(writer, index=False, sheet_name="FINAL_" + ts)
+        add_smart_table(writer, final_df, "FINAL_" + ts, "SMART_" + "FINAL_" + ts)
 
         apply_status_colors(
             writer,
