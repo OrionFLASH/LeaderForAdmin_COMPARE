@@ -119,41 +119,48 @@ FLOAT_FIELDS = [
 
 # --- Все цвета статусов здесь ---
 STATUS_COLORS_DICT = {
-    'No Change':        '#BFBFBF',  # Серый
-    'Rang BANK NO CHANGE': '#BFBFBF',
-    'Rang TB NO CHANGE':   '#BFBFBF',
-    'Rang GOSB NO CHANGE': '#BFBFBF',
-    'Change UP':        '#C6EFCE',  # Светло-зелёный
-    'Rang BANK UP':     '#C6EFCE',
-    'Rang TB UP':       '#C6EFCE',
-    'Rang GOSB UP':     '#C6EFCE',
-    'Change DOWN':      '#FFC7CE',  # Светло-красный
-    'Rang BANK DOWN':   '#FFC7CE',
-    'Rang TB DOWN':     '#FFC7CE',
-    'Rang GOSB DOWN':   '#FFC7CE',
-    'New ADD':          '#E2EFDA',  # Бледно-зелёный
-    'Rang BANK NEW':    '#E2EFDA',
-    'Rang TB NEW':      '#E2EFDA',
-    'Rang GOSB NEW':    '#E2EFDA',
-    'Remove FROM':      '#383838',  # Темно-серый, ещё темнее
-    'Rang BANK REMOVE': '#383838',
-    'Rang TB REMOVE':   '#383838',
-    'Rang GOSB REMOVE': '#383838',
-    'Remove':           '#383838',
-    'New':              '#E2EFDA',
-    "NO_RANK":          "#EDEDED",  # Светло-серый цвет (можно взять любой RGB/HEX)
-    "CONT":             "#C9DAF8",    # Светло-голубой или другой на ваш вкус
-    "Not_used":         "#F5F5F5", # Как было
+    # ==== Основные статусы изменений ====
+    'No Change':        '#BFBFBF',  # Серый (нет изменений)
+    'Rang BANK NO CHANGE': '#BFBFBF',  # Серый (нет изменений по BANK)
+    'Rang TB NO CHANGE':   '#BFBFBF',  # Серый (нет изменений по TB)
+    'Rang GOSB NO CHANGE': '#BFBFBF',  # Серый (нет изменений по GOSB)
 
-    # Для призовых (категорий)
-    "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
-    "STAYED_OUT":       '#BFBFBF',   # Серый (остался вне призёров)
-    "DROPPED_OUT_PRIZE":'#FF0000',   # Красный (выбыл из призёров)
-    "LOST_VIEW":        '#383838',   # Темно-серый (пропал из вида)
-    "PRIZE_UNCHANGED":  '#C6EFCE',   # Светло-зелёный (призёр без изменений)
-    "PRIZE_UP":         '#00B050',   # Зеленый (улучшил место)
-    "PRIZE_DOWN":       '#FFC7CE',   # Светло-красный (понизился)
+    'Change UP':        '#C6EFCE',  # Светло-зелёный (повышение)
+    'Rang BANK UP':     '#C6EFCE',  # Светло-зелёный (повышение BANK)
+    'Rang TB UP':       '#C6EFCE',  # Светло-зелёный (повышение TB)
+    'Rang GOSB UP':     '#C6EFCE',  # Светло-зелёный (повышение GOSB)
+
+    'Change DOWN':      '#FFC7CE',  # Светло-красный (понижение)
+    'Rang BANK DOWN':   '#FFC7CE',  # Светло-красный (понижение BANK)
+    'Rang TB DOWN':     '#FFC7CE',  # Светло-красный (понижение TB)
+    'Rang GOSB DOWN':   '#FFC7CE',  # Светло-красный (понижение GOSB)
+
+    'New ADD':          '#E2EFDA',  # Бледно-зелёный (новое добавление)
+    'Rang BANK NEW':    '#E2EFDA',  # Бледно-зелёный (новый по BANK)
+    'Rang TB NEW':      '#E2EFDA',  # Бледно-зелёный (новый по TB)
+    'Rang GOSB NEW':    '#E2EFDA',  # Бледно-зелёный (новый по GOSB)
+
+    'Remove FROM':      '#383838',  # Темно-серый (удалён)
+    'Rang BANK REMOVE': '#383838',  # Темно-серый (удалён из BANK)
+    'Rang TB REMOVE':   '#383838',  # Темно-серый (удалён из TB)
+    'Rang GOSB REMOVE': '#383838',  # Темно-серый (удалён из GOSB)
+    'Remove':           '#383838',  # Темно-серый (удалён)
+
+    'New':              '#E2EFDA',  # Бледно-зелёный (новый участник)
+    "NO_RANK":          "#EDEDED",  # Светло-серый (нет ранга)
+    "CONT":             "#C9DAF8",  # Светло-голубой (контролируемый, присутствует в одном из файлов)
+    "Not_used":         "#F5F5F5",  # Почти белый (не используется)
+
+    # ==== Призовые (категориальные) статусы ====
+    "ENTERED_PRIZE":    '#00B050',  # Ярко-зелёный (попал в призёры)
+    "STAYED_OUT":       '#BFBFBF',  # Серый (остался вне призёров)
+    "DROPPED_OUT_PRIZE":'#FF0000',  # Красный (выбыл из призёров)
+    "LOST_VIEW":        '#383838',  # Темно-серый (пропал из вида)
+    "PRIZE_UNCHANGED":  '#C6EFCE',  # Светло-зелёный (призёр без изменений)
+    "PRIZE_UP":         '#00B050',  # Ярко-зелёный (улучшил место среди призёров)
+    "PRIZE_DOWN":       '#FFC7CE',  # Светло-красный (понизился среди призёров)
 }
+
 
 # Какие колонки раскрашивать (для передачи в apply_status_colors)
 STATUS_COLOR_COLUMNS = [
