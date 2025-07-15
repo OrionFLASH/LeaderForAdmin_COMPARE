@@ -39,7 +39,7 @@ SUMMARY_TEMPLATE = (
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
-LOG_BASENAME = "LOG1"
+LOG_BASENAME = "LOG2"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
 AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
@@ -120,7 +120,7 @@ FLOAT_FIELDS = [
 # --- Все цвета статусов здесь ---
 STATUS_COLORS_DICT = {
     # ==== Основные статусы изменений ====
-    'No Change':        '#BFBFBF',  # Серый (нет изменений)
+    'No Change':         '#BFBFBF',  # Серый (нет изменений)
     'Rang BANK NO CHANGE': '#BFBFBF',  # Серый (нет изменений по BANK)
     'Rang TB NO CHANGE':   '#BFBFBF',  # Серый (нет изменений по TB)
     'Rang GOSB NO CHANGE': '#BFBFBF',  # Серый (нет изменений по GOSB)
