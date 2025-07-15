@@ -95,6 +95,8 @@ STATUS_COLORS_DICT = {
     'Remove':           '#383838',
     'New':              '#E2EFDA',
     "NO_RANK":          "#EDEDED",  # Светло-серый цвет (можно взять любой RGB/HEX)
+    "CONT":             "#C9DAF8",    # Светло-голубой или другой на ваш вкус
+    "Not_used":         "#F5F5F5", # Как было
 
     # Для призовых (категорий)
     "ENTERED_PRIZE":    '#00B050',   # Зеленый (попал в призёры)
@@ -669,7 +671,7 @@ def log_compare_stats(compare_df):
 
 from datetime import datetime
 
-def build_final_sheet(compare_df, allowed_ids, out_prefix, category_rank_map, log=logging):
+def build_final_sheet(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
     """
     Формирует финальную кросс-таблицу по всем сотрудникам и турнирам:
     - строки: уникальные сотрудники (employeeNumber, lastName, firstName)
@@ -720,8 +722,19 @@ def build_final_sheet(compare_df, allowed_ids, out_prefix, category_rank_map, lo
                 if rank < best_rank:
                     best_val = v
                     best_rank = rank
+            was_in_before = ((df_before['employeeNumber'] == emp['employeeNumber']) &
+                             (df_before['tournamentId'] == t_id)).any()
+            was_in_after = ((df_after['employeeNumber'] == emp['employeeNumber']) &
+                            (df_after['tournamentId'] == t_id)).any()
+
             # Если ничего не выбрано — ставим Not_used
-            final_value = best_val if best_val is not None else "Not_used"
+            if best_val is not None:
+                final_value = best_val
+            elif was_in_before or was_in_after:
+                final_value = "CONT"
+            else:
+                final_value = "Not_used"
+
             row[t_id] = final_value
             # Логирование выбора
             log.debug(
@@ -777,9 +790,8 @@ def main():
     )
 
     # Построение финального листа (FINAL)
-    final_df, tournaments = build_final_sheet(
-        compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP
-    )
+    final_df, tournaments = build_final_sheet(compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger)
+
     final_status_cols = tournaments
     log_compare_stats(compare_df)
 
