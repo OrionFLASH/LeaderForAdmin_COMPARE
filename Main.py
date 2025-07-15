@@ -8,7 +8,10 @@ from datetime import datetime
 from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
 
-# Пути
+# === Константы путей и имён файлов ===
+# Здесь задаются пути к папкам с исходниками, результатами и логами,
+# а также имена входных/выходных файлов. При необходимости их можно
+# поменять под свои каталоги.
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
@@ -17,21 +20,26 @@ BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
 AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
-# === PATCH: список турниров, которые надо анализировать ===
+# --- Список турниров, которые будут включены в анализ ---
+# Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-    "TOURNAMENT_91_01", "TOURNAMENT_92_01", "TOURNAMENT_93_01", "TOURNAMENT_94_01", "TOURNAMENT_95_01", "TOURNAMENT_96_01"
-    # "t_01_2025-1_05-1_1_3021", "t_02_2025-1_05-1_1_3022"
-    # Если оставить пустым, то анализируются все турниры.
+    "TOURNAMENT_91_01", "TOURNAMENT_92_01", "TOURNAMENT_93_01",
+    "TOURNAMENT_94_01", "TOURNAMENT_95_01", "TOURNAMENT_96_01",
+    # Пример дополнительных ID:
+    # "t_01_2025-1_05-1_1_3021", "t_02_2025-1_05-1_1_3022",
 ]
 
-# Список значений, которые считаются отсутствием изменений для любых статусных полей
+# --- Статусы, при которых считаем, что изменений не произошло ---
+# Если встречается один из этих кодов, строка считается без изменений
 NOCHANGE_STATUSES = [
-    "", "No Change", "STAYED_OUT", "PRIZE_UNCHANGED", "Remove", "Remove FROM", "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
-    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE", "Rang NO CHANGE", "NO_RANK"
+    "", "No Change", "STAYED_OUT", "PRIZE_UNCHANGED", "Remove", "Remove FROM",
+    "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
+    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
+    "Rang NO CHANGE", "NO_RANK",
 ]
 
-
-# Структура колонок
+# --- Основные колонки в исходных данных ---
+# Эти поля всегда присутствуют и выводятся в итоговую таблицу в первую очередь
 PRIORITY_COLS = [
     'SourceFile', 'tournamentId', 'employeeNumber', 'lastName', 'firstName',
     'terDivisionName', 'divisionRatings_BANK_groupId', 'divisionRatings_TB_groupId',
@@ -41,12 +49,14 @@ PRIORITY_COLS = [
     'divisionRatings_BANK_ratingCategoryName', 'divisionRatings_TB_ratingCategoryName',
     'divisionRatings_GOSB_ratingCategoryName',
 ]
+# Ключевые поля, по которым склеиваются данные "до" и "после"
 COMPARE_KEYS = [
     'tournamentId',
     'employeeNumber',
     'lastName',
     'firstName',
 ]
+# Поля, которые сравниваются между выгрузками
 COMPARE_FIELDS = [
     'SourceFile',
     'terDivisionName',
@@ -60,6 +70,7 @@ COMPARE_FIELDS = [
     'divisionRatings_TB_ratingCategoryName',
     'divisionRatings_GOSB_ratingCategoryName',
 ]
+# Поля, которые должны быть приведены к типу int
 INT_FIELDS = [
     'divisionRatings_BANK_groupId',
     'divisionRatings_TB_groupId',
@@ -68,6 +79,7 @@ INT_FIELDS = [
     'divisionRatings_TB_placeInRating',
     'divisionRatings_GOSB_placeInRating',
 ]
+# Поля, которые хранят вещественные значения
 FLOAT_FIELDS = [
     'indicatorValue',
     'successValue',
@@ -236,6 +248,7 @@ def log_data_stats(df, label):
     logging.info(f"[{label}] Все поля: {list(df.columns)}")
 
 def log_compare_stats(compare_df):
+    """Выводит сводную статистику по статусным колонкам таблицы сравнения."""
     n_rows = len(compare_df)
     logging.info(f"[COMPARE] Строк всего: {n_rows}")
     for col in STATUS_COLOR_COLUMNS:
@@ -245,6 +258,7 @@ def log_compare_stats(compare_df):
 
 
 def parse_float(val, context=None):
+    """Преобразует значение в float, если возможно."""
     try:
         if val is None or (isinstance(val, str) and val.strip().lower() in {'', 'none', 'null'}):
             return None
@@ -268,6 +282,7 @@ def parse_float(val, context=None):
         return None
 
 def parse_int(val, context=None):
+    """Преобразует значение в int, если возможно."""
     try:
         if val is None or (isinstance(val, str) and val.strip().lower() in {'', 'none', 'null'}):
             return None
@@ -284,6 +299,7 @@ def parse_int(val, context=None):
         return None
 
 def flatten_leader(leader, tournament_id, source_file):
+    """Разворачивает запись лидера в плоскую структуру для DataFrame."""
     context = f"файл={source_file}, турнир={tournament_id}, employee={leader.get('employeeNumber', 'N/A')}"
     row = {
         'SourceFile': source_file,
@@ -321,6 +337,7 @@ def flatten_leader(leader, tournament_id, source_file):
     return row
 
 def process_json_file(filepath):
+    """Загружает JSON-файл и превращает его в список словарей."""
     filename = os.path.basename(filepath)
     rows = []
     try:
@@ -384,6 +401,7 @@ def process_json_file(filepath):
     return rows
 
 def load_json_folder(folder):
+    """Читает все JSON-файлы из папки и объединяет их."""
     all_rows = []
     for fname in os.listdir(folder):
         if fname.lower().endswith('.json'):
@@ -396,6 +414,7 @@ def load_json_folder(folder):
     return df
 
 def make_compare_sheet(df_before, df_after, sheet_name):
+    """Формирует таблицу сравнения показателей между выгрузками."""
     try:
         join_keys = COMPARE_KEYS
         before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
@@ -654,15 +673,8 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
             cell.font = Font(color="FFFFFF")
 
 
-def log_compare_stats(compare_df):
-    n_rows = len(compare_df)
-    logging.info(f"[COMPARE] Строк всего: {n_rows}")
-    for col in STATUS_COLOR_COLUMNS:
-        if col in compare_df.columns:
-            counts = compare_df[col].value_counts(dropna=False).to_dict()
-            logging.info(f"[COMPARE] {col}: {counts}")
-
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
+    """Строит итоговый лист по всем турнирам и сотрудникам."""
     log.info("=== [FINAL] Построение итоговой сводной таблицы ===")
     # === ДОБАВЛЕНО: вывод предполагаемого числа итераций ===
     total_loops = len(employees) * len(tournaments)
@@ -741,6 +753,7 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
 
 
 def main():
+    """Основная точка входа в программу."""
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
 
     before_path = os.path.join(SOURCE_DIR, BEFORE_FILENAME)
