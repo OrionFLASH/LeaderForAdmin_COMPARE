@@ -185,9 +185,6 @@ STATUS_RATING_CATEGORY = {
     "down":     "PRIZE_DOWN",
 }
 
-import logging
-import os
-from datetime import datetime
 
 def setup_logger(log_dir, basename):
     """
@@ -243,8 +240,6 @@ def log_compare_stats(compare_df):
             counts = compare_df[col].value_counts(dropna=False).to_dict()
             logging.info(f"[COMPARE] {col}: {counts}")
 
-
-import re
 
 def parse_float(val, context=None):
     try:
