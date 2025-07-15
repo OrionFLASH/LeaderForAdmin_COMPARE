@@ -47,17 +47,17 @@ RESULT_EXCEL = "LFA_COMPARE.xlsx"
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-        "t_01_2025-0_08-2_5_2021", "t_01_2025-2_08-2_6_2031", "TOURNAMENT_43_2025_Y01", "TOURNAMENT_66_2024_P02", "TOURNAMENT_67_2024_Y01"
-#        "t_01_2025-0_12-1_1_1001", "t_01_2025-0_12-1_1_1002", "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
-#        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001", "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061",
-#        "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021", "t_01_2025-2_16-1_1_2031", "t_01_2025-0_08-2_3_2021", "t_01_2025-0_08-2_3_2031", "t_01_2025-1_05-1_1_3061",
-#        "t_01_2025-2_05-1_1_3071", "t_01_2025-1_08-1_1_3061", "t_01_2025-2_08-1_1_3071", "t_01_2025-0_08-6_1_4001", "t_01_2025-1_15-1_2_2021", "t_01_2025-2_15-1_2_2031",
-#        "t_01_2025-1_01-6_4001", "t_01_2025-0_18-7_1_1001", "t_01_2025-0_18-7_2_1001", "t_01_2025-0_18-7_3_1001", "t_01_2025-0_18-7_4_1001", "t_01_2025-1_07-5_1_4001",
-#        "t_01_2025-1_07-5_2_4001", "t_01_2025-1_07-5_3_4001", "t_01_2025-1_01-7_1_4001", "t_01_2025-2_01-7_1_4001", "t_01_2025-1_07-5_5_4001", "t_01_2025-1_07-5_6_4001",
-#        "t_01_2025-1_07-5_7_4001", "t_01_2025-1_07-5_8_4001", "t_01_2025-1_07-5_9_4001", "t_01_2025-1_07-5_10_4001", "t_01_2025-1_02-1_2_4001", "t_01_2025-0_10-3_1_1001",
-#        "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001", "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
-#        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-1_17-2_1_4001", "t_01_2025-1_17-2_2_4001", "t_01_2025-1_17-2_3_4001",
-#        "t_01_2025-1_17-2_4_4001", "t_01_2025-0_13-1_4_1001", "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
+        "t_01_2025-0_08-2_5_2021", "t_01_2025-2_08-2_6_2031", "TOURNAMENT_43_2025_Y01", "TOURNAMENT_66_2024_P02", "TOURNAMENT_67_2024_Y01",
+        "t_01_2025-0_12-1_1_1001", "t_01_2025-0_12-1_1_1002", "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
+        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001", "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061",
+        "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021", "t_01_2025-2_16-1_1_2031", "t_01_2025-0_08-2_3_2021", "t_01_2025-0_08-2_3_2031", "t_01_2025-1_05-1_1_3061",
+        "t_01_2025-2_05-1_1_3071", "t_01_2025-1_08-1_1_3061", "t_01_2025-2_08-1_1_3071", "t_01_2025-0_08-6_1_4001", "t_01_2025-1_15-1_2_2021", "t_01_2025-2_15-1_2_2031",
+        "t_01_2025-1_01-6_4001", "t_01_2025-0_18-7_1_1001", "t_01_2025-0_18-7_2_1001", "t_01_2025-0_18-7_3_1001", "t_01_2025-0_18-7_4_1001", "t_01_2025-1_07-5_1_4001",
+        "t_01_2025-1_07-5_2_4001", "t_01_2025-1_07-5_3_4001", "t_01_2025-1_01-7_1_4001", "t_01_2025-2_01-7_1_4001", "t_01_2025-1_07-5_5_4001", "t_01_2025-1_07-5_6_4001",
+        "t_01_2025-1_07-5_7_4001", "t_01_2025-1_07-5_8_4001", "t_01_2025-1_07-5_9_4001", "t_01_2025-1_07-5_10_4001", "t_01_2025-1_02-1_2_4001", "t_01_2025-0_10-3_1_1001",
+        "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001", "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
+        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-1_17-2_1_4001", "t_01_2025-1_17-2_2_4001", "t_01_2025-1_17-2_3_4001",
+        "t_01_2025-1_17-2_4_4001", "t_01_2025-0_13-1_4_1001", "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
     # Если оставить пустым, то анализируются все турниры.
 ]
 
@@ -706,7 +706,9 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
 
 
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
-    """Строит итоговый лист по всем турнирам и сотрудникам."""
+    """Строит итоговый лист по всем турнирам и сотрудникам.
+    Оптимизированная версия: lookup-структуры вместо фильтрации.
+    """
     log.info(FINAL_START_MESSAGE)
     if allowed_ids:
         tournaments = list(allowed_ids)
@@ -716,16 +718,16 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     emp_cols = ['employeeNumber', 'lastName', 'firstName']
     employees = compare_df[emp_cols].drop_duplicates().sort_values(emp_cols)
     log.info(f"[FINAL] Уникальных сотрудников: {len(employees)}")
-
-    # === ДОБАВЛЕНО: вывод предполагаемого числа итераций ===
     total_loops = len(employees) * len(tournaments)
-    log.info(f"[FINAL] Всего итераций обработки: {total_loops} "
-             f"(Сотрудников: {len(employees)}, Турниров: {len(tournaments)})")
+    log.info(f"[FINAL] Всего итераций обработки: {total_loops}")
 
-    # Создаём MultiIndex по сотрудникам и турнирам для быстрой выборки
+    # --- OPTIMIZATION 1: Быстрый доступ к compare_df по сотруднику+турнир (tuple index)
     indexed = compare_df.set_index(['employeeNumber', 'lastName', 'firstName', 'tournamentId'])
+    # --- OPTIMIZATION 2: Быстрый доступ к признаку "был ли в before/after"
+    # (employeeNumber, tournamentId) -> True/False
+    before_pairs = set(zip(df_before['employeeNumber'], df_before['tournamentId']))
+    after_pairs = set(zip(df_after['employeeNumber'], df_after['tournamentId']))
 
-    # Подготавливаем все статусы сразу (для BANK/TB/GOSB)
     status_cols = [
         'divisionRatings_BANK_ratingCategoryName_Compare',
         'divisionRatings_TB_ratingCategoryName_Compare',
@@ -733,51 +735,44 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     ]
 
     result_rows = []
-    total_emps = len(employees)
-    total_tournaments = len(tournaments)
 
     for emp_idx, (_, emp) in enumerate(employees.iterrows(), 1):
         emp_key = (emp['employeeNumber'], emp['lastName'], emp['firstName'])
         row = {col: emp[col] for col in emp_cols}
-        for t_idx, t_id in enumerate(tournaments, 1):
-            # Вместо фильтрации — прямой доступ
-            try:
-                idx = emp_key + (t_id,)
-                if idx in indexed.index:
-                    subset = indexed.loc[idx]
-                    candidates = []
-                    for col in status_cols:
-                        val = subset[col]
-                        if pd.notnull(val) and str(val).strip().upper() not in ['NONE', 'NULL', '']:
-                            candidates.append(val)
-                    best_val = None
-                    best_rank = float('inf')
-                    for v in candidates:
-                        rank = category_rank_map.get(v, 99)
-                        if rank < best_rank:
-                            best_val = v
-                            best_rank = rank
-                else:
-                    best_val = None
 
-                was_in_before = ((df_before['employeeNumber'] == emp['employeeNumber']) &
-                                 (df_before['tournamentId'] == t_id)).any()
-                was_in_after = ((df_after['employeeNumber'] == emp['employeeNumber']) &
-                                (df_after['tournamentId'] == t_id)).any()
-                if best_val is not None:
-                    final_value = best_val
-                elif was_in_before or was_in_after:
-                    final_value = "CONT"
-                else:
-                    final_value = "Not_used"
-                row[t_id] = final_value
-            except Exception as ex:
-                log.debug("")
-                log.error(
-                    f"[FINAL][ERROR] Турнир {t_id}, сотрудник {emp['employeeNumber']} {emp['lastName']} {emp['firstName']}: {ex}"
-                )
+        for t_id in tournaments:
+            idx = emp_key + (t_id,)
+            best_val = None
+            best_rank = float('inf')
+
+            # --- OPTIMIZATION 3: Без try, через .get() для индекса
+            subset = indexed.loc[idx] if idx in indexed.index else None
+            if subset is not None:
+                candidates = []
+                for col in status_cols:
+                    val = subset[col]
+                    if pd.notnull(val) and str(val).strip().upper() not in ['NONE', 'NULL', '']:
+                        candidates.append(val)
+                for v in candidates:
+                    rank = category_rank_map.get(v, 99)
+                    if rank < best_rank:
+                        best_val = v
+                        best_rank = rank
+
+            # --- OPTIMIZATION 4: Мгновенная проверка наличия в before/after без .any()
+            was_in_before = (emp['employeeNumber'], t_id) in before_pairs
+            was_in_after = (emp['employeeNumber'], t_id) in after_pairs
+
+            if best_val is not None:
+                final_value = best_val
+            elif was_in_before or was_in_after:
+                final_value = "CONT"
+            else:
+                final_value = "Not_used"
+
+            row[t_id] = final_value
         result_rows.append(row)
-    log.debug("")
+
     final_df = pd.DataFrame(result_rows)
     log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
     return final_df, tournaments
