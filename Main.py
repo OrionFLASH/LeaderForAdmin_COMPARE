@@ -664,7 +664,12 @@ def log_compare_stats(compare_df):
 
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
     log.info("=== [FINAL] Построение итоговой сводной таблицы ===")
-
+    # === ДОБАВЛЕНО: вывод предполагаемого числа итераций ===
+    total_loops = len(employees) * len(tournaments)
+    log.info(f"[FINAL] Всего итераций обработки: {total_loops} "
+             f"(Сотрудников: {len(employees)}, Турниров: {len(tournaments)})")
+    print(f"Ожидайте выполнения: предстоит обработать {total_loops} комбинаций "
+          f"(≈ {len(employees)} сотрудников × {len(tournaments)} турниров). Я работаю над итогом…")
     if allowed_ids:
         tournaments = list(allowed_ids)
     else:
