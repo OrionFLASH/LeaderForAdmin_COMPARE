@@ -8,6 +8,30 @@ from datetime import datetime
 from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
 
+# --- Параметры логирования ---
+# LOG_LEVEL определяет глубину вывода в консоль (INFO или DEBUG)
+LOG_LEVEL = logging.INFO
+
+# --- Цветовые настройки и служебные тексты ---
+# Набор цветов с тёмным фоном, требующих белый шрифт
+APPLY_DARK_BG_COLORS = {"383838", "222222"}
+# Аналогичный набор для листа легенды
+LEGEND_DARK_BG_COLORS = {"383838", "222222", "000000"}
+# Цвет, применяемый по умолчанию, если статус неизвестен
+DEFAULT_STATUS_COLOR = "#FFFFFF"
+
+# Текстовые обозначения этапов
+FINAL_START_MESSAGE = "=== [FINAL] Построение итоговой сводной таблицы ==="
+STATUS_LEGEND_SHEET = "STATUS_LEGEND"
+
+# Шаблон итоговой строки
+SUMMARY_TEMPLATE = (
+    "[SUMMARY] турниров: {tourn}; сотрудников: {emps}; "
+    "изменений: {changes}; load_before: {t1:.2f}s; "
+    "load_after: {t2:.2f}s; compare: {t3:.2f}s; final: {t4:.2f}s; "
+    "export: {t5:.2f}s; total: {tt:.2f}s"
+)
+
 # === Константы путей и имён файлов ===
 # Здесь задаются пути к папкам с исходниками, результатами и логами,
 # а также имена входных/выходных файлов. При необходимости их можно
@@ -231,7 +255,7 @@ def setup_logger(log_dir, basename):
     fh = logging.FileHandler(log_path, encoding='utf-8', mode='a')
     fh.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
+    ch.setLevel(LOG_LEVEL)
     fmt = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', "%Y-%m-%d %H:%M:%S")
     fh.setFormatter(fmt)
     ch.setFormatter(fmt)
@@ -631,7 +655,7 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
     Закрашивает ячейки сравнения в Excel по статусам (openpyxl).
     """
     worksheet = writer.sheets[sheet_name]
-    dark_bg = {"383838", "222222"}  # без #
+    dark_bg = APPLY_DARK_BG_COLORS
     # Cтатусы с белым шрифтом
     statuses_with_white_font = set()
     for status, color in status_color_map.items():
@@ -652,14 +676,14 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
                 if status in statuses_with_white_font:
                     cell.font = Font(color="FFFFFF")
 
-def add_status_legend(writer, status_colors, status_ru_dict, status_rating_category, sheet_name="STATUS_LEGEND"):
+def add_status_legend(writer, status_colors, status_ru_dict, status_rating_category, sheet_name=STATUS_LEGEND_SHEET):
     """
     Добавляет лист Excel с легендой по статусам (openpyxl-версия).
     """
     rows = []
     for key, eng_status in status_rating_category.items():
         ru, comment = status_ru_dict.get(eng_status, ("", ""))
-        color = status_colors.get(eng_status, "#FFFFFF")
+        color = status_colors.get(eng_status, DEFAULT_STATUS_COLOR)
         rows.append({
             "Status code": eng_status,
             "Статус (рус)": ru,
@@ -677,13 +701,13 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
         color_clean = color.lstrip("#")
         cell = worksheet.cell(row=row_idx, column=3)  # 3-я колонка — Excel fill color
         cell.fill = PatternFill(fill_type="solid", fgColor=color_clean)
-        if color_clean.lower() in {"383838", "222222", "000000"}:
+        if color_clean.lower() in LEGEND_DARK_BG_COLORS:
             cell.font = Font(color="FFFFFF")
 
 
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
     """Строит итоговый лист по всем турнирам и сотрудникам."""
-    log.info("=== [FINAL] Построение итоговой сводной таблицы ===")
+    log.info(FINAL_START_MESSAGE)
     if allowed_ids:
         tournaments = list(allowed_ids)
     else:
@@ -748,12 +772,12 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
                     final_value = "Not_used"
                 row[t_id] = final_value
             except Exception as ex:
-                print()
+                log.debug("")
                 log.error(
                     f"[FINAL][ERROR] Турнир {t_id}, сотрудник {emp['employeeNumber']} {emp['lastName']} {emp['firstName']}: {ex}"
                 )
         result_rows.append(row)
-    print()
+    log.debug("")
     final_df = pd.DataFrame(result_rows)
     log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
     return final_df, tournaments
@@ -763,6 +787,7 @@ def main():
     """Основная точка входа в программу."""
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
 
+    t_start = datetime.now()
     before_path = os.path.join(SOURCE_DIR, BEFORE_FILENAME)
     after_path = os.path.join(SOURCE_DIR, AFTER_FILENAME)
     now = datetime.now()
@@ -772,12 +797,17 @@ def main():
     sheet_compare = f"COMPARE_{ts}"
 
     logger.info(f"[MAIN] Читаем BEFORE: {before_path}")
+    t_beg_before = datetime.now()
     rows_before = process_json_file(before_path)
     df_before = pd.DataFrame(rows_before)
+    t_end_before = datetime.now()
     log_data_stats(df_before, "BEFORE")
+
     logger.info(f"[MAIN] Читаем AFTER: {after_path}")
+    t_beg_after = datetime.now()
     rows_after = process_json_file(after_path)
     df_after = pd.DataFrame(rows_after)
+    t_end_after = datetime.now()
     log_data_stats(df_after, "AFTER")
 
     before_tids = set(df_before['tournamentId'].unique())
@@ -797,12 +827,16 @@ def main():
     df_after = df_after.reindex(columns=all_cols)
 
     logger.info(f"[MAIN] Формируем COMPARE")
+    t_beg_compare = datetime.now()
     compare_df, sheet_compare = make_compare_sheet(
         df_before, df_after, sheet_compare
     )
+    t_end_compare = datetime.now()
 
     # Построение финального листа (FINAL)
+    t_beg_final = datetime.now()
     final_df, tournaments = build_final_sheet_fast(compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger)
+    t_end_final = datetime.now()
 
     final_status_cols = tournaments
     log_compare_stats(compare_df)
@@ -811,6 +845,7 @@ def main():
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(TARGET_DIR, result_excel_ts)
 
+    t_beg_export = datetime.now()
     with pd.ExcelWriter(out_excel, engine='openpyxl') as writer:
         logger.info(f"[MAIN] Экспортируем BEFORE лист {sheet_before}")
     #    df_before.to_excel(writer, index=False, sheet_name=sheet_before)
@@ -842,8 +877,22 @@ def main():
             STATUS_COLOR_COLUMNS
         )
         logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE_{ts}")
-        add_status_legend(writer, STATUS_COLORS_DICT, STATUS_RU_DICT, STATUS_RATING_CATEGORY, sheet_name="STATUS_LEGEND")
+        add_status_legend(writer, STATUS_COLORS_DICT, STATUS_RU_DICT, STATUS_RATING_CATEGORY, sheet_name=STATUS_LEGEND_SHEET)
         logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")
+    t_end_export = datetime.now()
+
+    summary = SUMMARY_TEMPLATE.format(
+        tourn=len(tournaments),
+        emps=len(final_df),
+        changes=len(compare_df),
+        t1=(t_end_before - t_beg_before).total_seconds(),
+        t2=(t_end_after - t_beg_after).total_seconds(),
+        t3=(t_end_compare - t_beg_compare).total_seconds(),
+        t4=(t_end_final - t_beg_final).total_seconds(),
+        t5=(t_end_export - t_beg_export).total_seconds(),
+        tt=(t_end_export - t_start).total_seconds(),
+    )
+    logger.info(summary)
 
 
 if __name__ == "__main__":
