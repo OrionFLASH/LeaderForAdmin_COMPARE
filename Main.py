@@ -754,6 +754,7 @@ def main():
     sheet_after = f"AFTER_{ts}"
     sheet_compare = f"COMPARE_{ts}"
 
+
     logger.info(f"[MAIN] Читаем BEFORE: {before_path}")
     rows_before = process_json_file(before_path)
     df_before = pd.DataFrame(rows_before)
