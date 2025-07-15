@@ -676,12 +676,6 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
     """Строит итоговый лист по всем турнирам и сотрудникам."""
     log.info("=== [FINAL] Построение итоговой сводной таблицы ===")
-    # === ДОБАВЛЕНО: вывод предполагаемого числа итераций ===
-    total_loops = len(employees) * len(tournaments)
-    log.info(f"[FINAL] Всего итераций обработки: {total_loops} "
-             f"(Сотрудников: {len(employees)}, Турниров: {len(tournaments)})")
-    print(f"Ожидайте выполнения: предстоит обработать {total_loops} комбинаций "
-          f"(≈ {len(employees)} сотрудников × {len(tournaments)} турниров). Я работаю над итогом…")
     if allowed_ids:
         tournaments = list(allowed_ids)
     else:
@@ -690,6 +684,15 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     emp_cols = ['employeeNumber', 'lastName', 'firstName']
     employees = compare_df[emp_cols].drop_duplicates().sort_values(emp_cols)
     log.info(f"[FINAL] Уникальных сотрудников: {len(employees)}")
+
+    # === ДОБАВЛЕНО: вывод предполагаемого числа итераций ===
+    total_loops = len(employees) * len(tournaments)
+    log.info(f"[FINAL] Всего итераций обработки: {total_loops} "
+             f"(Сотрудников: {len(employees)}, Турниров: {len(tournaments)})")
+    print(
+        f"Ожидайте выполнения: предстоит обработать {total_loops} комбинаций "
+        f"(≈ {len(employees)} сотрудников × {len(tournaments)} турниров). Я работаю над итогом…"
+    )
 
     # Создаём MultiIndex по сотрудникам и турнирам для быстрой выборки
     indexed = compare_df.set_index(['employeeNumber', 'lastName', 'firstName', 'tournamentId'])
