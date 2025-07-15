@@ -3,7 +3,10 @@ import json
 import pandas as pd
 import re
 import logging
+# import sys
 from datetime import datetime
+from openpyxl.styles import PatternFill, Font
+from openpyxl.utils import get_column_letter
 
 # Пути
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
@@ -571,9 +574,6 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         logging.error(f"Ошибка в make_compare_sheet: {ex}")
         return pd.DataFrame(), sheet_name
 
-import pandas as pd
-from openpyxl.styles import PatternFill, Font
-
 def add_smart_table(writer, df, sheet_name, table_name):
     """
     Экспортирует DataFrame на лист Excel с автоформатированием:
@@ -583,7 +583,6 @@ def add_smart_table(writer, df, sheet_name, table_name):
     df.to_excel(writer, sheet_name=sheet_name, index=False)
     try:
         worksheet = writer.sheets[sheet_name]
-        from openpyxl.utils import get_column_letter
 
         # Сделать заголовок жирным
         for cell in next(worksheet.iter_rows(min_row=1, max_row=1)):
@@ -656,7 +655,6 @@ def add_status_legend(writer, status_colors, status_ru_dict, status_rating_categ
 
 
 def log_compare_stats(compare_df):
-    import logging
     n_rows = len(compare_df)
     logging.info(f"[COMPARE] Строк всего: {n_rows}")
     for col in STATUS_COLOR_COLUMNS:
@@ -664,84 +662,78 @@ def log_compare_stats(compare_df):
             counts = compare_df[col].value_counts(dropna=False).to_dict()
             logging.info(f"[COMPARE] {col}: {counts}")
 
-from datetime import datetime
-
-def build_final_sheet(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
-    """
-    Формирует финальную кросс-таблицу по всем сотрудникам и турнирам:
-    - строки: уникальные сотрудники (employeeNumber, lastName, firstName)
-    - колонки: tournamentId
-    - значение: min по рейтингу из BANK/TB/GOSB Compare-колонок; если нет — "Not_used"
-    """
+def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
     log.info("=== [FINAL] Построение итоговой сводной таблицы ===")
 
-    # 1. Собрать список турниров для колонок
     if allowed_ids:
         tournaments = list(allowed_ids)
-        log.info(f"[FINAL] ALLOWED_TOURNAMENT_IDS задан: {tournaments}")
     else:
         tournaments = sorted(compare_df['tournamentId'].dropna().unique())
-        log.info(f"[FINAL] Турниры (все из данных): {tournaments}")
 
-    # 2. Собрать список уникальных сотрудников
     emp_cols = ['employeeNumber', 'lastName', 'firstName']
     employees = compare_df[emp_cols].drop_duplicates().sort_values(emp_cols)
     log.info(f"[FINAL] Уникальных сотрудников: {len(employees)}")
 
-    # 3. Подготовить структуру итоговой таблицы
+    # Создаём MultiIndex по сотрудникам и турнирам для быстрой выборки
+    indexed = compare_df.set_index(['employeeNumber', 'lastName', 'firstName', 'tournamentId'])
+
+    # Подготавливаем все статусы сразу (для BANK/TB/GOSB)
+    status_cols = [
+        'divisionRatings_BANK_ratingCategoryName_Compare',
+        'divisionRatings_TB_ratingCategoryName_Compare',
+        'divisionRatings_GOSB_ratingCategoryName_Compare'
+    ]
+
     result_rows = []
-    for _, emp in employees.iterrows():
+    total_emps = len(employees)
+    total_tournaments = len(tournaments)
+
+    for emp_idx, (_, emp) in enumerate(employees.iterrows(), 1):
+        emp_key = (emp['employeeNumber'], emp['lastName'], emp['firstName'])
         row = {col: emp[col] for col in emp_cols}
-        for t_id in tournaments:
-            # Отфильтровать все записи этого сотрудника по этому турниру
-            mask = (
-                (compare_df['employeeNumber'] == emp['employeeNumber']) &
-                (compare_df['tournamentId'] == t_id)
-            )
-            subset = compare_df[mask]
-            # Собрать значения трех Compare-полей
-            candidates = []
-            for col in [
-                'divisionRatings_BANK_ratingCategoryName_Compare',
-                'divisionRatings_TB_ratingCategoryName_Compare',
-                'divisionRatings_GOSB_ratingCategoryName_Compare'
-            ]:
-                val = subset[col].values[0] if len(subset) else None
-                if val and str(val).strip() and str(val).strip().upper() not in ['NONE', 'NULL', '']:
-                    candidates.append(val)
-            # Если есть варианты — выбрать с наименьшим CATEGORY_RANK_MAP (меньше — лучше)
-            best_val = None
-            best_rank = float('inf')
-            for v in candidates:
-                rank = category_rank_map.get(v, 99)
-                if rank < best_rank:
-                    best_val = v
-                    best_rank = rank
-            was_in_before = ((df_before['employeeNumber'] == emp['employeeNumber']) &
-                             (df_before['tournamentId'] == t_id)).any()
-            was_in_after = ((df_after['employeeNumber'] == emp['employeeNumber']) &
-                            (df_after['tournamentId'] == t_id)).any()
+        for t_idx, t_id in enumerate(tournaments, 1):
+            # Вместо фильтрации — прямой доступ
+            try:
+                idx = emp_key + (t_id,)
+                if idx in indexed.index:
+                    subset = indexed.loc[idx]
+                    candidates = []
+                    for col in status_cols:
+                        val = subset[col]
+                        if pd.notnull(val) and str(val).strip().upper() not in ['NONE', 'NULL', '']:
+                            candidates.append(val)
+                    best_val = None
+                    best_rank = float('inf')
+                    for v in candidates:
+                        rank = category_rank_map.get(v, 99)
+                        if rank < best_rank:
+                            best_val = v
+                            best_rank = rank
+                else:
+                    best_val = None
 
-            # Если ничего не выбрано — ставим Not_used
-            if best_val is not None:
-                final_value = best_val
-            elif was_in_before or was_in_after:
-                final_value = "CONT"
-            else:
-                final_value = "Not_used"
-
-            row[t_id] = final_value
-            # Логирование выбора
-            log.debug(
-                f"[FINAL] {emp['employeeNumber']} {t_id} => "
-                f"candidates={candidates}, selected={final_value}, best_rank={best_rank}"
-            )
+                was_in_before = ((df_before['employeeNumber'] == emp['employeeNumber']) &
+                                 (df_before['tournamentId'] == t_id)).any()
+                was_in_after = ((df_after['employeeNumber'] == emp['employeeNumber']) &
+                                (df_after['tournamentId'] == t_id)).any()
+                if best_val is not None:
+                    final_value = best_val
+                elif was_in_before or was_in_after:
+                    final_value = "CONT"
+                else:
+                    final_value = "Not_used"
+                row[t_id] = final_value
+            except Exception as ex:
+                print()
+                log.error(
+                    f"[FINAL][ERROR] Турнир {t_id}, сотрудник {emp['employeeNumber']} {emp['lastName']} {emp['firstName']}: {ex}"
+                )
         result_rows.append(row)
-
-    # 4. Сформировать DataFrame
+    print()
     final_df = pd.DataFrame(result_rows)
     log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
     return final_df, tournaments
+
 
 def main():
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
@@ -785,7 +777,7 @@ def main():
     )
 
     # Построение финального листа (FINAL)
-    final_df, tournaments = build_final_sheet(compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger)
+    final_df, tournaments = build_final_sheet_fast(compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger)
 
     final_status_cols = tournaments
     log_compare_stats(compare_df)
