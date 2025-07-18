@@ -119,47 +119,50 @@ FLOAT_FIELDS = [
 
 # --- Все цвета статусов здесь ---
 STATUS_COLORS_DICT = {
-    # ==== Основные статусы изменений ====
-    'No Change':         '#BFBFBF',  # Серый (нет изменений)
-    'Rang BANK NO CHANGE': '#BFBFBF',  # Серый (нет изменений по BANK)
-    'Rang TB NO CHANGE':   '#BFBFBF',  # Серый (нет изменений по TB)
-    'Rang GOSB NO CHANGE': '#BFBFBF',  # Серый (нет изменений по GOSB)
+    # ==== Новая шкала статусов по ratingCategoryName ====
+    "Новый призёр": '#00B050',              # Ярко-зелёный (появился и сразу стал призёром)
+    "Снизил призовое место": '#FFC7CE',     # Светло-красный (понизился в категории)
+    "Поднялся в рейтинге призеров": '#C6EFCE',  # Светло-зелёный (улучшил категорию среди призёров)
+    "Сохранил призовую позицию": '#D9EAD3', # Светло-зелёный с оттенком (не изменил категорию)
+    "Лишился награды": '#FF0000',           # Красный (выпал из призёров)
+    "Стал призёром": '#00B0F0',             # Ярко-синий (поднялся из вне в призёры)
+    "Без изменений": '#BFBFBF',             # Серый (без изменений, остался вне призов)
+    "Удалённый участник без награды": '#808080',  # Тёмно-серый (исчез из списка, был без награды)
+    "Удалённый призёр": '#808080',          # Тёмно-серый (призёр исчез из списка)
+    "Новый участник без награды": '#E2EFDA',# Бледно-зелёный (новый, но не призёр)
+    "Не участвовал": '#EDEDED',             # Светло-серый (отсутствует в обеих выборках)
 
-    'Change UP':        '#C6EFCE',  # Светло-зелёный (повышение)
-    'Rang BANK UP':     '#C6EFCE',  # Светло-зелёный (повышение BANK)
-    'Rang TB UP':       '#C6EFCE',  # Светло-зелёный (повышение TB)
-    'Rang GOSB UP':     '#C6EFCE',  # Светло-зелёный (повышение GOSB)
+    # ==== Прочие статусы — для других колонок (оставляем как есть) ====
+    "Change DOWN": '#FFC7CE',               # Светло-красный (показатель снизился)
+    "Change UP": '#C6EFCE',                 # Светло-зелёный (показатель вырос)
+    "New ADD": '#E2EFDA',                   # Бледно-зелёный (новое значение)
+    "Remove FROM": '#383838',              # Тёмно-серый (удалённое значение)
+    "NO_RANK": "#EDEDED",                   # Светло-серый (нет ранга)
+    "CONT": "#C9DAF8",                      # Светло-голубой (участник присутствует, но без изменения)
+    "Not_used": "#F5F5F5",                  # Почти белый (не используется)
 
-    'Change DOWN':      '#FFC7CE',  # Светло-красный (понижение)
-    'Rang BANK DOWN':   '#FFC7CE',  # Светло-красный (понижение BANK)
-    'Rang TB DOWN':     '#FFC7CE',  # Светло-красный (понижение TB)
-    'Rang GOSB DOWN':   '#FFC7CE',  # Светло-красный (понижение GOSB)
+    # ==== Статусы по PLACE рейтингу — оставлены для BANK/TB/GOSB ====
+    'Rang BANK UP': '#C6EFCE',              # Повышение в BANK рейтинге
+    'Rang TB UP': '#C6EFCE',                # Повышение в TB рейтинге
+    'Rang GOSB UP': '#C6EFCE',              # Повышение в GOSB рейтинге
 
-    'New ADD':          '#E2EFDA',  # Бледно-зелёный (новое добавление)
-    'Rang BANK NEW':    '#E2EFDA',  # Бледно-зелёный (новый по BANK)
-    'Rang TB NEW':      '#E2EFDA',  # Бледно-зелёный (новый по TB)
-    'Rang GOSB NEW':    '#E2EFDA',  # Бледно-зелёный (новый по GOSB)
+    'Rang BANK DOWN': '#FFC7CE',            # Понижение в BANK рейтинге
+    'Rang TB DOWN': '#FFC7CE',              # Понижение в TB рейтинге
+    'Rang GOSB DOWN': '#FFC7CE',            # Понижение в GOSB рейтинге
 
-    'Remove FROM':      '#383838',  # Темно-серый (удалён)
-    'Rang BANK REMOVE': '#383838',  # Темно-серый (удалён из BANK)
-    'Rang TB REMOVE':   '#383838',  # Темно-серый (удалён из TB)
-    'Rang GOSB REMOVE': '#383838',  # Темно-серый (удалён из GOSB)
-    'Remove':           '#383838',  # Темно-серый (удалён)
+    'Rang BANK NEW': '#E2EFDA',             # Новый участник BANK
+    'Rang TB NEW': '#E2EFDA',               # Новый участник TB
+    'Rang GOSB NEW': '#E2EFDA',             # Новый участник GOSB
 
-    'New':              '#E2EFDA',  # Бледно-зелёный (новый участник)
-    "NO_RANK":          "#EDEDED",  # Светло-серый (нет ранга)
-    "CONT":             "#C9DAF8",  # Светло-голубой (контролируемый, присутствует в одном из файлов)
-    "Not_used":         "#F5F5F5",  # Почти белый (не используется)
+    'Rang BANK REMOVE': '#383838',          # Удалён из BANK
+    'Rang TB REMOVE': '#383838',            # Удалён из TB
+    'Rang GOSB REMOVE': '#383838',          # Удалён из GOSB
 
-    # ==== Призовые (категориальные) статусы ====
-    "ENTERED_PRIZE":    '#00B050',  # Ярко-зелёный (попал в призёры)
-    "STAYED_OUT":       '#BFBFBF',  # Серый (остался вне призёров)
-    "DROPPED_OUT_PRIZE":'#FF0000',  # Красный (выбыл из призёров)
-    "LOST_VIEW":        '#383838',  # Темно-серый (пропал из вида)
-    "PRIZE_UNCHANGED":  '#C6EFCE',  # Светло-зелёный (призёр без изменений)
-    "PRIZE_UP":         '#00B050',  # Ярко-зелёный (улучшил место среди призёров)
-    "PRIZE_DOWN":       '#FFC7CE',  # Светло-красный (понизился среди призёров)
+    'Rang BANK NO CHANGE': '#BFBFBF',       # Без изменений в BANK
+    'Rang TB NO CHANGE': '#BFBFBF',         # Без изменений в TB
+    'Rang GOSB NO CHANGE': '#BFBFBF',       # Без изменений в GOSB
 }
+
 
 
 # Какие колонки раскрашивать (для передачи в apply_status_colors)
@@ -183,6 +186,21 @@ STATUS_RU_DICT = {
     "PRIZE_UP":           ("УЛУЧШИЛ ПРИЗОВОЕ МЕСТО", "Был призёром и стал лучше (например, с бронзы на золото)."),
     "PRIZE_DOWN":         ("ПОНИЗИЛСЯ В РЕЙТИНГЕ ПРИЗЁРОВ", "Был призёром и опустился на худшее призовое место."),
 }
+
+STATUS_LEGEND_DATA = [
+    ("Новый призёр", "Участник впервые попал в призёры", "#00B050"),
+    ("Снизил призовое место", "Участник стал хуже: например, с серебра на бронзу", "#FFC7CE"),
+    ("Поднялся в рейтинге призеров", "Улучшил место среди призёров: например, с бронзы на серебро", "#C6EFCE"),
+    ("Сохранил призовую позицию", "Остался на том же призовом месте", "#D9EAD3"),
+    ("Лишился награды", "Был призёром, стал без награды", "#FF0000"),
+    ("Стал призёром", "Был без награды, попал в призёры", "#00B0F0"),
+    ("Без изменений", "Был вне призёров и остался вне", "#BFBFBF"),
+    ("Удалённый участник без награды", "Был в прошлом, исчез из списка, не был призёром", "#808080"),
+    ("Удалённый призёр", "Был призёром, но исчез из списка", "#808080"),
+    ("Новый участник без награды", "Появился впервые, но не стал призёром", "#E2EFDA"),
+    ("Не участвовал", "Отсутствует в обеих выборках", "#EDEDED"),
+]
+
 
 # Статусы для сравнения (логика и сокращения)
 STATUS_NEW_REMOVE = {
@@ -239,6 +257,34 @@ STATUS_RATING_CATEGORY = {
     "down":     "PRIZE_DOWN",
 }
 
+
+category_compare_lookup = {
+    (0, None, 0, None): {'desc_ru': 'Не участвовал', 'tag': 'NoShow'},
+    (0, None, 1, 4): {'desc_ru': 'Новый участник без награды', 'tag': 'New'},
+    (0, None, 1, 3): {'desc_ru': 'Новый призёр', 'tag': 'NewWin'},
+    (0, None, 1, 2): {'desc_ru': 'Новый призёр', 'tag': 'NewWin'},
+    (0, None, 1, 1): {'desc_ru': 'Новый призёр', 'tag': 'NewWin'},
+    (1, 4, 0, None): {'desc_ru': 'Удалённый участник без награды', 'tag': 'Removed'},
+    (1, 3, 0, None): {'desc_ru': 'Удалённый призёр', 'tag': 'RemovedWin'},
+    (1, 2, 0, None): {'desc_ru': 'Удалённый призёр', 'tag': 'RemovedWin'},
+    (1, 1, 0, None): {'desc_ru': 'Удалённый призёр', 'tag': 'RemovedWin'},
+    (1, 4, 1, 4): {'desc_ru': 'Без изменений', 'tag': 'NoChange'},
+    (1, 4, 1, 3): {'desc_ru': 'Стал призёром', 'tag': 'Upgrade'},
+    (1, 4, 1, 2): {'desc_ru': 'Стал призёром', 'tag': 'Upgrade'},
+    (1, 4, 1, 1): {'desc_ru': 'Стал призёром', 'tag': 'Upgrade'},
+    (1, 3, 1, 4): {'desc_ru': 'Лишился награды', 'tag': 'Lost'},
+    (1, 3, 1, 3): {'desc_ru': 'Сохранил призовую позицию', 'tag': 'KeptSame'},
+    (1, 3, 1, 2): {'desc_ru': 'Поднялся в рейтинге призеров', 'tag': 'WinUp'},
+    (1, 3, 1, 1): {'desc_ru': 'Поднялся в рейтинге призеров', 'tag': 'WinUp'},
+    (1, 2, 1, 4): {'desc_ru': 'Лишился награды', 'tag': 'Lost'},
+    (1, 2, 1, 3): {'desc_ru': 'Снизил призовое место', 'tag': 'WinDown'},
+    (1, 2, 1, 2): {'desc_ru': 'Сохранил призовую позицию', 'tag': 'KeptSame'},
+    (1, 2, 1, 1): {'desc_ru': 'Поднялся в рейтинге призеров', 'tag': 'WinUp'},
+    (1, 1, 1, 4): {'desc_ru': 'Лишился награды', 'tag': 'Lost'},
+    (1, 1, 1, 3): {'desc_ru': 'Снизил призовое место', 'tag': 'WinDown'},
+    (1, 1, 1, 2): {'desc_ru': 'Снизил призовое место', 'tag': 'WinDown'},
+    (1, 1, 1, 1): {'desc_ru': 'Сохранил призовую позицию', 'tag': 'KeptSame'},
+}
 
 def setup_logger(log_dir, basename):
     """
@@ -453,184 +499,125 @@ def load_json_folder(folder):
     return df
 
 def make_compare_sheet(df_before, df_after, sheet_name):
-    """Формирует таблицу сравнения показателей между выгрузками."""
-    try:
-        join_keys = COMPARE_KEYS
-        before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
-        after_uniq  = df_after.drop_duplicates(subset=join_keys, keep='last')
-        all_keys = pd.concat([before_uniq[join_keys], after_uniq[join_keys]]).drop_duplicates()
-        before_uniq = before_uniq.set_index(join_keys)
-        after_uniq  = after_uniq.set_index(join_keys)
-        before_uniq = before_uniq[COMPARE_FIELDS] if len(before_uniq) else pd.DataFrame(columns=COMPARE_FIELDS)
-        after_uniq  = after_uniq[COMPARE_FIELDS]  if len(after_uniq) else pd.DataFrame(columns=COMPARE_FIELDS)
-        before_uniq = before_uniq.add_prefix('BEFORE_')
-        after_uniq  = after_uniq.add_prefix('AFTER_')
-        compare_df = all_keys.set_index(join_keys) \
-            .join(before_uniq, how='left') \
-            .join(after_uniq, how='left') \
-            .reset_index()
+    join_keys = COMPARE_KEYS
+    before_uniq = df_before.drop_duplicates(subset=join_keys, keep='last')
+    after_uniq  = df_after.drop_duplicates(subset=join_keys, keep='last')
+    all_keys = pd.concat([before_uniq[join_keys], after_uniq[join_keys]]).drop_duplicates()
+    before_uniq = before_uniq.set_index(join_keys)
+    after_uniq  = after_uniq.set_index(join_keys)
+    before_uniq = before_uniq[COMPARE_FIELDS] if len(before_uniq) else pd.DataFrame(columns=COMPARE_FIELDS)
+    after_uniq  = after_uniq[COMPARE_FIELDS]  if len(after_uniq) else pd.DataFrame(columns=COMPARE_FIELDS)
+    before_uniq = before_uniq.add_prefix('BEFORE_')
+    after_uniq  = after_uniq.add_prefix('AFTER_')
+    compare_df = all_keys.set_index(join_keys) \
+        .join(before_uniq, how='left') \
+        .join(after_uniq, how='left') \
+        .reset_index()
 
-        # New_Remove
-        def new_remove_row(row):
-            before_exist = not pd.isnull(row['BEFORE_indicatorValue']) or not pd.isnull(row['BEFORE_SourceFile'])
-            after_exist  = not pd.isnull(row['AFTER_indicatorValue'])  or not pd.isnull(row['AFTER_SourceFile'])
-            if before_exist and after_exist:
-                return STATUS_NEW_REMOVE['both']
-            elif before_exist:
-                return STATUS_NEW_REMOVE['before_only']
-            elif after_exist:
-                return STATUS_NEW_REMOVE['after_only']
-            else:
-                return ""
-        compare_df['New_Remove'] = compare_df.apply(new_remove_row, axis=1)
-
-        # indicatorValue_Compare
-        def value_compare(row):
-            before = row.get('BEFORE_indicatorValue', None)
-            after  = row.get('AFTER_indicatorValue', None)
-            if pd.isnull(before) and not pd.isnull(after):
-                return STATUS_INDICATOR['val_add']
-            if not pd.isnull(before) and pd.isnull(after):
-                return STATUS_INDICATOR['val_remove']
-            if pd.isnull(before) and pd.isnull(after):
-                return ""
-            if before == after:
-                return STATUS_INDICATOR['val_nochange']
-            elif before > after:
-                return STATUS_INDICATOR['val_down']
-            else:
-                return STATUS_INDICATOR['val_up']
-        compare_df['indicatorValue_Compare'] = compare_df.apply(value_compare, axis=1)
-
-        def rang_compare(row, before_col, after_col, status_dict):
-            before = row.get(f'BEFORE_{before_col}', None)
-            after  = row.get(f'AFTER_{after_col}', None)
-            if pd.isnull(before) and not pd.isnull(after):
-                return status_dict['val_add']
-            if not pd.isnull(before) and pd.isnull(after):
-                return status_dict['val_remove']
-            if pd.isnull(before) and pd.isnull(after):
-                return status_dict.get('val_norank', 'NO_RANK')
-            if before == after:
-                return status_dict['val_nochange']
-            elif before > after:
-                return status_dict['val_up']
-            else:
-                return status_dict['val_down']
-
-        compare_df['divisionRatings_BANK_placeInRating_Compare'] = compare_df.apply(
-            lambda row: rang_compare(row, 'divisionRatings_BANK_placeInRating', 'divisionRatings_BANK_placeInRating', STATUS_BANK_PLACE), axis=1)
-        compare_df['divisionRatings_TB_placeInRating_Compare'] = compare_df.apply(
-            lambda row: rang_compare(row, 'divisionRatings_TB_placeInRating', 'divisionRatings_TB_placeInRating', STATUS_TB_PLACE), axis=1)
-        compare_df['divisionRatings_GOSB_placeInRating_Compare'] = compare_df.apply(
-            lambda row: rang_compare(row, 'divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating', STATUS_GOSB_PLACE), axis=1)
-
-        # ratingCategoryName сравнение с логикой "меньше — лучше"
-        def category_rank(cat):
-            return CATEGORY_RANK_MAP.get(cat, 4)  # если неизвестно — вне призовых
-
-        def category_compare(before_cat, after_cat):
-            b_rank = category_rank(before_cat)
-            a_rank = category_rank(after_cat)
-            # 1) Не был в призовых или не было вообще, но попал в призовые - "ENTERED_PRIZE"
-            if b_rank == 4 and a_rank < 4:
-                return STATUS_RATING_CATEGORY["in2prize"]
-            # 2) Не был в призовых - остался вне призовых - "STAYED_OUT"
-            if b_rank == 4 and a_rank == 4:
-                return STATUS_RATING_CATEGORY["stay_out"]
-            # 3) Был в призовых - попал в "нужно поднажать" - "DROPPED_OUT_PRIZE"
-            if b_rank < 4 and a_rank == 4:
-                return STATUS_RATING_CATEGORY["from2out"]
-            # 4) Был в призовых - нет в новом файле - "LOST_VIEW"
-            if b_rank < 4 and (after_cat is None or after_cat == ""):
-                return STATUS_RATING_CATEGORY["lost"]
-            # 5) Призовое место не изменилось - "PRIZE_UNCHANGED"
-            if b_rank == a_rank and b_rank < 4:
-                return STATUS_RATING_CATEGORY["same"]
-            # 6) Призовое место улучшилось (меньше — лучше) - "PRIZE_UP"
-            if b_rank > a_rank and a_rank < 4:
-                return STATUS_RATING_CATEGORY["up"]
-            # 7) Призовое место ухудшилось (меньше — лучше) - "PRIZE_DOWN"
-            if b_rank < a_rank and a_rank < 4:
-                return STATUS_RATING_CATEGORY["down"]
-            # Если ничего не подошло
+    # indicatorValue_Compare
+    def value_compare(row):
+        before = row.get('BEFORE_indicatorValue', None)
+        after  = row.get('AFTER_indicatorValue', None)
+        if pd.isnull(before) and not pd.isnull(after):
+            return STATUS_INDICATOR['val_add']
+        if not pd.isnull(before) and pd.isnull(after):
+            return STATUS_INDICATOR['val_remove']
+        if pd.isnull(before) and pd.isnull(after):
             return ""
+        if before == after:
+            return STATUS_INDICATOR['val_nochange']
+        elif before > after:
+            return STATUS_INDICATOR['val_down']
+        else:
+            return STATUS_INDICATOR['val_up']
+    compare_df['indicatorValue_Compare'] = compare_df.apply(value_compare, axis=1)
 
-        # Для каждой категории делаем отдельное поле
-        for group, col in [
-            ('BANK',   'divisionRatings_BANK_ratingCategoryName'),
-            ('TB',     'divisionRatings_TB_ratingCategoryName'),
-            ('GOSB',   'divisionRatings_GOSB_ratingCategoryName'),
-        ]:
-            def cmp_func(row, col=col):
-                before_cat = row.get(f'BEFORE_{col}', None)
-                after_cat  = row.get(f'AFTER_{col}', None)
-                return category_compare(before_cat, after_cat)
-            compare_df[f"{col}_Compare"] = compare_df.apply(cmp_func, axis=1)
+    def rang_compare(row, before_col, after_col, status_dict):
+        before = row.get(f'BEFORE_{before_col}', None)
+        after  = row.get(f'AFTER_{after_col}', None)
+        if pd.isnull(before) and not pd.isnull(after):
+            return status_dict['val_add']
+        if not pd.isnull(before) and pd.isnull(after):
+            return status_dict['val_remove']
+        if pd.isnull(before) and pd.isnull(after):
+            return status_dict.get('val_norank', 'NO_RANK')
+        if before == after:
+            return status_dict['val_nochange']
+        elif before > after:
+            return status_dict['val_up']
+        else:
+            return status_dict['val_down']
 
-        final_cols = COMPARE_KEYS + [
-            'New_Remove', 'indicatorValue_Compare',
-            'divisionRatings_BANK_placeInRating_Compare',
-            'divisionRatings_TB_placeInRating_Compare',
-            'divisionRatings_GOSB_placeInRating_Compare',
-            'divisionRatings_BANK_ratingCategoryName_Compare',
-            'divisionRatings_TB_ratingCategoryName_Compare',
-            'divisionRatings_GOSB_ratingCategoryName_Compare'
-        ] + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
-        compare_df = compare_df.reindex(columns=final_cols)
-        logging.info(f"[OK] Compare sheet готов: строк {len(compare_df)}, колонок {len(compare_df.columns)}")
-        # === PATCH: ЛОГИРОВАНИЕ перед фильтрацией ===
-        logging.info(f"[COMPARE] Строк до фильтрации по турнирам: {len(compare_df)}")
-        logging.info(f"Уникальных турниров: {compare_df['tournamentId'].nunique()}")
-        logging.info(f"Список турниров: {compare_df['tournamentId'].unique()[:10]}")
-        # Если файл большой, логируем только часть уникальных id
+    compare_df['divisionRatings_BANK_placeInRating_Compare'] = compare_df.apply(
+        lambda row: rang_compare(row, 'divisionRatings_BANK_placeInRating', 'divisionRatings_BANK_placeInRating', STATUS_BANK_PLACE), axis=1)
+    compare_df['divisionRatings_TB_placeInRating_Compare'] = compare_df.apply(
+        lambda row: rang_compare(row, 'divisionRatings_TB_placeInRating', 'divisionRatings_TB_placeInRating', STATUS_TB_PLACE), axis=1)
+    compare_df['divisionRatings_GOSB_placeInRating_Compare'] = compare_df.apply(
+        lambda row: rang_compare(row, 'divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating', STATUS_GOSB_PLACE), axis=1)
 
-        # === PATCH: Фильтрация по списку турниров ===
-        if ALLOWED_TOURNAMENT_IDS:
-            compare_df = compare_df[compare_df['tournamentId'].isin(ALLOWED_TOURNAMENT_IDS)]
-            logging.info(f"[COMPARE] После фильтрации по ALLOWED_TOURNAMENT_IDS осталось строк: {len(compare_df)}")
+    # === НОВАЯ ФУНКЦИЯ ДЛЯ ratingCategoryName ===
+    def category_compare_enhanced(row, colname):
+        before_cat = row.get(f'BEFORE_{colname}')
+        after_cat = row.get(f'AFTER_{colname}')
+        before_present = 0 if pd.isnull(before_cat) or before_cat == "" else 1
+        after_present = 0 if pd.isnull(after_cat) or after_cat == "" else 1
+        cat_map = {
+            "Вы в лидерах": 1,
+            "Серебро": 2,
+            "Бронза": 3,
+            "Нужно поднажать": 4,
+            "": 4,
+            None: 4
+        }
+        b_cat = cat_map.get(before_cat, None) if before_present else None
+        a_cat = cat_map.get(after_cat, None) if after_present else None
+        key = (before_present, b_cat, after_present, a_cat)
+        result = category_compare_lookup.get(key)
+        return result["desc_ru"] if result else ""
 
-        # === PATCH: определяем статусные колонки (ВАЖНО!) ===
-        # Ниже — ваши реальные имена статусных колонок!
-        status_cols = [
-            'indicatorValue_Compare',
-            'divisionRatings_BANK_placeInRating_Compare',
-            'divisionRatings_TB_placeInRating_Compare',
-            'divisionRatings_GOSB_placeInRating_Compare',
-            'divisionRatings_BANK_ratingCategoryName_Compare',
-            'divisionRatings_TB_ratingCategoryName_Compare',
-            'divisionRatings_GOSB_ratingCategoryName_Compare'
-        ]
-        # Проверим, что эти колонки есть
+    for group, col in [
+        ('BANK',   'divisionRatings_BANK_ratingCategoryName'),
+        ('TB',     'divisionRatings_TB_ratingCategoryName'),
+        ('GOSB',   'divisionRatings_GOSB_ratingCategoryName'),
+    ]:
+        compare_df[f"{col}_Compare"] = compare_df.apply(lambda row: category_compare_enhanced(row, col), axis=1)
+
+    final_cols = COMPARE_KEYS + [
+        'indicatorValue_Compare',
+        'divisionRatings_BANK_placeInRating_Compare',
+        'divisionRatings_TB_placeInRating_Compare',
+        'divisionRatings_GOSB_placeInRating_Compare',
+        'divisionRatings_BANK_ratingCategoryName_Compare',
+        'divisionRatings_TB_ratingCategoryName_Compare',
+        'divisionRatings_GOSB_ratingCategoryName_Compare'
+    ] + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
+    compare_df = compare_df.reindex(columns=final_cols)
+
+    # Фильтрация по tournamentId
+    if ALLOWED_TOURNAMENT_IDS:
+        compare_df = compare_df[compare_df['tournamentId'].isin(ALLOWED_TOURNAMENT_IDS)]
+
+    # Фильтрация строк без изменений
+    status_cols = [
+        'indicatorValue_Compare',
+        'divisionRatings_BANK_placeInRating_Compare',
+        'divisionRatings_TB_placeInRating_Compare',
+        'divisionRatings_GOSB_placeInRating_Compare',
+        'divisionRatings_BANK_ratingCategoryName_Compare',
+        'divisionRatings_TB_ratingCategoryName_Compare',
+        'divisionRatings_GOSB_ratingCategoryName_Compare'
+    ]
+
+    def is_any_change(row):
         for col in status_cols:
-            if col not in compare_df.columns:
-                logging.warning(f"[COMPARE] Нет колонки {col} в compare_df!")
+            val = str(row.get(col, "")).strip()
+            if val not in NOCHANGE_STATUSES:
+                return True
+        return False
 
-        # === PATCH: фильтрация строк без изменений ===
-        def is_any_change(row):
-            for col in status_cols:
-                val = str(row.get(col, "")).strip()
-                if val not in NOCHANGE_STATUSES:
-                    return True  # есть отличие!
-            return False  # только статусы из списка — строку УБИРАЕМ
+    compare_df = compare_df[compare_df.apply(is_any_change, axis=1)].reset_index(drop=True)
+    return compare_df, sheet_name
 
-        mask = compare_df.apply(is_any_change, axis=1)
-        compare_df = compare_df[mask].reset_index(drop=True)
-
-        logging.info(f"[COMPARE] После удаления строк без изменений осталось: {len(compare_df)}")
-        # Для отладки — выводим статистику по статусам:
-        try:
-            stats = {}
-            for col in status_cols:
-                stats[col] = dict(compare_df[col].value_counts())
-            logging.info(f"[COMPARE] Статистика по статусным колонкам: {stats}")
-        except Exception as ex:
-            logging.warning(f"[COMPARE] Не удалось вывести статистику по статусам: {ex}")
-
-        return compare_df, sheet_name
-    except Exception as ex:
-        logging.error(f"Ошибка в make_compare_sheet: {ex}")
-        return pd.DataFrame(), sheet_name
 
 def add_smart_table(writer, df, sheet_name, table_name):
     """
@@ -683,33 +670,33 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
                 if status in statuses_with_white_font:
                     cell.font = Font(color="FFFFFF")
 
-def add_status_legend(writer, status_colors, status_ru_dict, status_rating_category, sheet_name=STATUS_LEGEND_SHEET):
-    """
-    Добавляет лист Excel с легендой по статусам (openpyxl-версия).
-    """
-    rows = []
-    for key, eng_status in status_rating_category.items():
-        ru, comment = status_ru_dict.get(eng_status, ("", ""))
-        color = status_colors.get(eng_status, DEFAULT_STATUS_COLOR)
-        rows.append({
-            "Status code": eng_status,
-            "Статус (рус)": ru,
-            "Excel fill color": color,
-            "Комментарий": comment
-        })
-    legend_df = pd.DataFrame(rows)
-    legend_df = legend_df[["Status code", "Статус (рус)", "Excel fill color", "Комментарий"]]
-    legend_df.to_excel(writer, index=False, sheet_name=sheet_name)
+def add_status_legend(writer, legend_data, sheet_name=STATUS_LEGEND_SHEET):
+    """Добавляет лист Excel с легендой по статусам (универсально)."""
+    df_legend = pd.DataFrame(legend_data, columns=["Статус", "Описание", "Цвет"])
+    df_legend.to_excel(writer, sheet_name=sheet_name, index=False)
 
-    worksheet = writer.sheets[sheet_name]
-    # Цветное оформление
-    for row_idx, row in enumerate(legend_df.itertuples(index=False), start=2):
-        color = str(row[2])  # "Excel fill color"
-        color_clean = color.lstrip("#")
-        cell = worksheet.cell(row=row_idx, column=3)  # 3-я колонка — Excel fill color
-        cell.fill = PatternFill(fill_type="solid", fgColor=color_clean)
-        if color_clean.lower() in LEGEND_DARK_BG_COLORS:
+    ws = writer.sheets[sheet_name]
+
+    from openpyxl.styles import PatternFill, Font
+    from openpyxl.utils import get_column_letter
+
+    # Автоширина + цветовая заливка
+    for row_idx, (_, _, color) in enumerate(legend_data, start=2):
+        cell = ws.cell(row=row_idx, column=3)  # колонка "Цвет"
+        hex_color = color.lstrip('#')
+        cell.fill = PatternFill(fill_type="solid", fgColor=hex_color)
+        if hex_color.lower() in {"383838", "808080"}:
             cell.font = Font(color="FFFFFF")
+
+    # Жирный заголовок
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    # Автоширина колонок
+    for i, column_cells in enumerate(ws.columns, 1):
+        max_len = max(len(str(cell.value)) if cell.value is not None else 0 for cell in column_cells)
+        ws.column_dimensions[get_column_letter(i)].width = max_len + 2
+
 
 
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
@@ -876,7 +863,7 @@ def main():
             STATUS_COLOR_COLUMNS
         )
         logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE_{ts}")
-        add_status_legend(writer, STATUS_COLORS_DICT, STATUS_RU_DICT, STATUS_RATING_CATEGORY, sheet_name=STATUS_LEGEND_SHEET)
+        add_status_legend(writer, STATUS_LEGEND_DATA, sheet_name=STATUS_LEGEND_SHEET)
         logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")
     t_end_export = datetime.now()
 
