@@ -771,6 +771,78 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
     return final_df, tournaments
 
+def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_after, log, sheet_name="FINAL_PLACE"):
+    """
+    Строит сводную таблицу по статусам placeInRating_Compare (BANK > TB > GOSB > Not_Used).
+    На входе — compare_df с рассчитанными колонками *_placeInRating_Compare,
+    а также списки сотрудников и турниров.
+    Подробное логирование.
+    """
+    log.info(f"=== [{sheet_name}] Построение итоговой таблицы по placeInRating ===")
+    if allowed_ids:
+        tournaments = list(allowed_ids)
+    else:
+        tournaments = sorted(compare_df['tournamentId'].dropna().unique())
+
+    emp_cols = ['employeeNumber', 'lastName', 'firstName']
+    employees = compare_df[emp_cols].drop_duplicates().sort_values(emp_cols)
+    log.info(f"[{sheet_name}] Уникальных сотрудников: {len(employees)}")
+    log.info(f"[{sheet_name}] Турниров: {len(tournaments)}")
+
+    # Быстрые индексы
+    indexed = compare_df.set_index(['employeeNumber', 'lastName', 'firstName', 'tournamentId'])
+    before_pairs = set(zip(df_before['employeeNumber'], df_before['tournamentId']))
+    after_pairs = set(zip(df_after['employeeNumber'], df_after['tournamentId']))
+
+    result_rows = []
+    status_counter = {t_id: {} for t_id in tournaments}
+
+    for _, emp in employees.iterrows():
+        emp_key = (emp['employeeNumber'], emp['lastName'], emp['firstName'])
+        row = {col: emp[col] for col in emp_cols}
+
+        for t_id in tournaments:
+            idx = emp_key + (t_id,)
+            value = None
+
+            if idx in indexed.index:
+                rec = indexed.loc[idx]
+                val_bank = rec.get('divisionRatings_BANK_placeInRating_Compare', None)
+                val_tb   = rec.get('divisionRatings_TB_placeInRating_Compare', None)
+                val_gosb = rec.get('divisionRatings_GOSB_placeInRating_Compare', None)
+                # Первый не пустой
+                for v in [val_bank, val_tb, val_gosb]:
+                    if pd.notnull(v) and str(v).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']:
+                        value = v
+                        break
+
+            was_in_before = (emp['employeeNumber'], t_id) in before_pairs
+            was_in_after = (emp['employeeNumber'], t_id) in after_pairs
+
+            if value is not None:
+                final_value = value
+            elif was_in_before or was_in_after:
+                final_value = "CONT"
+            else:
+                final_value = "Not_used"
+
+            # Счётчик по статусам для логов
+            status_counter[t_id][final_value] = status_counter[t_id].get(final_value, 0) + 1
+
+            row[t_id] = final_value
+        result_rows.append(row)
+
+    final_place_df = pd.DataFrame(result_rows)
+    log.info(f"[{sheet_name}] Итоговая таблица построена: {final_place_df.shape[0]} x {final_place_df.shape[1]}")
+
+    # Подробное логирование по каждому турниру
+    for t_id in tournaments:
+        log.info(f"[{sheet_name}] tournamentId={t_id} - распределение статусов:")
+        for status, count in status_counter[t_id].items():
+            log.info(f"[{sheet_name}]     {status}: {count}")
+    return final_place_df, tournaments
+
+
 
 def main():
     """Основная точка входа в программу."""
@@ -785,6 +857,7 @@ def main():
     sheet_after = f"AFTER"
     sheet_compare = f"COMPARE"
     sheet_final = f"FINAL"
+    sheet_final_place = f"FINAL_PLACE"
 
     logger.info(f"[MAIN] Читаем BEFORE: {before_path}")
     t_beg_before = datetime.now()
@@ -826,11 +899,15 @@ def main():
     # Построение финального листа (FINAL)
     t_beg_final = datetime.now()
     final_df, tournaments = build_final_sheet_fast(compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger)
+
     t_end_final = datetime.now()
 
     final_status_cols = tournaments
     log_compare_stats(compare_df)
-
+    # --- Новый лист FINAL_PLACE: подсчёт и логирование
+    final_place_df, tournaments_place = build_final_place_sheet_from_compare(
+        compare_df, ALLOWED_TOURNAMENT_IDS, df_before, df_after, logger, sheet_name=sheet_final_place
+    )
     base, ext = os.path.splitext(RESULT_EXCEL)
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(TARGET_DIR, result_excel_ts)
@@ -845,6 +922,15 @@ def main():
         add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare)
         logger.info(f"[MAIN] Экспортируем FINAL лист {sheet_final}")
         add_smart_table(writer, final_df, sheet_final, "SMART_" + sheet_final)
+        logger.info(f"[MAIN] Экспортируем FINAL лист {sheet_final_place}")
+        add_smart_table(writer, final_place_df, sheet_final_place, "SMART_" + sheet_final_place)
+
+        apply_status_colors(
+            writer,
+            final_place_df,
+            sheet_final_place,
+            STATUS_COLORS_DICT,
+            tournaments_place)
 
         apply_status_colors(
             writer,
