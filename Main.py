@@ -163,6 +163,35 @@ STATUS_COLORS_DICT = {
     'Rang GOSB NO CHANGE': '#BFBFBF',       # Без изменений в GOSB
 }
 
+# --- Статусы для листа FINAL (категории) ---
+ALL_STATUSES_FINAL = [
+    "Новый призёр",
+    "Поднялся в рейтинге призеров",
+    "Сохранил призовую позицию",
+    "Стал призёром",
+    "Снизил призовое место",
+    "Лишился награды",
+    "Удалённый призёр",
+    "Новый участник без награды",
+    "Без изменений",
+    "Удалённый участник без награды",
+    "CONT",
+    "Not_used",
+    "Не участвовал",
+]
+
+# --- Статусы для листа FINAL_PLACE (placeInRating) ---
+ALL_STATUSES_PLACE = [
+    "Rang BANK UP", "Rang TB UP", "Rang GOSB UP",
+    "Rang BANK NEW", "Rang TB NEW", "Rang GOSB NEW",
+    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
+    "NO_RANK",
+    "CONT",
+    "Not_used",
+    "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
+    "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
+]
+
 
 
 # Какие колонки раскрашивать (для передачи в apply_status_colors)
@@ -843,6 +872,24 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     return final_place_df, tournaments
 
 
+def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name="", suffix=""):
+    """
+    Добавляет справа в датафрейм df колонки по всем статусам.
+    Логирует для каждой строки результат.
+    """
+    log.info(f"[{sheet_name}] Добавление итоговых колонок по статусам: {all_statuses}")
+    for status in all_statuses:
+        colname = f"{status}{suffix}"
+        df[colname] = df[tournament_ids].apply(lambda row: sum((str(x) == status) for x in row), axis=1)
+        total = df[colname].sum()
+        log.info(f"[{sheet_name}] Статус '{status}': всего по таблице {total}")
+    # Лог по каждой строке (детализировано)
+    for i, row in df.iterrows():
+        emp_info = f"{row['employeeNumber']} {row['lastName']} {row['firstName']}"
+        stat_counts = {status: row[f"{status}{suffix}"] for status in all_statuses}
+        log.info(f"[{sheet_name}] [{emp_info}] Итоги по статусам: {stat_counts}")
+    return df
+
 
 def main():
     """Основная точка входа в программу."""
@@ -898,16 +945,23 @@ def main():
 
     # Построение финального листа (FINAL)
     t_beg_final = datetime.now()
-    final_df, tournaments = build_final_sheet_fast(compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger)
+    final_df, tournaments = build_final_sheet_fast(
+        compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger
+    )
 
-    t_end_final = datetime.now()
-
-    final_status_cols = tournaments
-    log_compare_stats(compare_df)
-    # --- Новый лист FINAL_PLACE: подсчёт и логирование
+    # Построение финального листа по place (FINAL_PLACE)
     final_place_df, tournaments_place = build_final_place_sheet_from_compare(
         compare_df, ALLOWED_TOURNAMENT_IDS, df_before, df_after, logger, sheet_name=sheet_final_place
     )
+    t_end_final = datetime.now()
+
+    # === ДОБАВЛЕНИЕ ИТОГОВЫХ КОЛОНОК ПО СТАТУСАМ ===
+    final_df = add_status_summary_columns(final_df, tournaments, ALL_STATUSES_FINAL, logger, "FINAL")
+    final_place_df = add_status_summary_columns(final_place_df, tournaments_place, ALL_STATUSES_PLACE, logger, "FINAL_PLACE", suffix="_PLACE")
+
+    final_status_cols = tournaments
+    log_compare_stats(compare_df)
+
     base, ext = os.path.splitext(RESULT_EXCEL)
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(TARGET_DIR, result_excel_ts)
@@ -922,7 +976,7 @@ def main():
         add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare)
         logger.info(f"[MAIN] Экспортируем FINAL лист {sheet_final}")
         add_smart_table(writer, final_df, sheet_final, "SMART_" + sheet_final)
-        logger.info(f"[MAIN] Экспортируем FINAL лист {sheet_final_place}")
+        logger.info(f"[MAIN] Экспортируем FINAL_PLACE лист {sheet_final_place}")
         add_smart_table(writer, final_place_df, sheet_final_place, "SMART_" + sheet_final_place)
 
         apply_status_colors(
@@ -931,7 +985,7 @@ def main():
             sheet_final_place,
             STATUS_COLORS_DICT,
             tournaments_place)
-
+        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL_PLACE")
         apply_status_colors(
             writer,
             final_df,
@@ -939,7 +993,7 @@ def main():
             STATUS_COLORS_DICT,
             final_status_cols
         )
-        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL_{ts}")
+        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL")
 
         apply_status_colors(
             writer,
@@ -948,7 +1002,7 @@ def main():
             STATUS_COLORS_DICT,
             STATUS_COLOR_COLUMNS
         )
-        logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE_{ts}")
+        logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE")
         add_status_legend(writer, STATUS_LEGEND_DATA, sheet_name=STATUS_LEGEND_SHEET)
         logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")
     t_end_export = datetime.now()
@@ -965,6 +1019,7 @@ def main():
         tt=(t_end_export - t_start).total_seconds(),
     )
     logger.info(summary)
+
 
 
 if __name__ == "__main__":
