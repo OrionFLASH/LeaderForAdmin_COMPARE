@@ -13,11 +13,6 @@ from openpyxl.utils import get_column_letter
 # LOG_LEVEL определяет глубину вывода в консоль (INFO или DEBUG)
 LOG_LEVEL = logging.INFO
 
-# --- Цветовые настройки и служебные тексты ---
-# Набор цветов с тёмным фоном, требующих белый шрифт
-APPLY_DARK_BG_COLORS = {"383838", "222222"}
-# Аналогичный набор для листа легенды
-LEGEND_DARK_BG_COLORS = {"383838", "222222", "000000"}
 # Цвет, применяемый по умолчанию, если статус неизвестен
 DEFAULT_STATUS_COLOR = "#FFFFFF"
 
@@ -87,13 +82,17 @@ COMPARE_KEYS = [
     'firstName',
 ]
 
-FREEZE_MAP = {
-    "FINAL":        "D2",  # Первая строка + 3 столбца
-    "FINAL_PLACE":  "D2",
-    "COMPARE":      "E2",  # Первая строка + 4 столбца
-    "BEFORE":       "G2",  # Первая строка + 6 столбцов
-    "AFTER":        "G2",
+# --- Карта закрепления (freeze panes) ---
+freeze_map = {
+        "FINAL":        "D2",  # Первая строка + 3 столбца
+        "FINAL_PLACE":  "D2",
+        "COMPARE":      "E2",  # Первая строка + 4 столбца
+        "BEFORE":       "G2",  # Первая строка + 6 столбцов
+        "AFTER":        "G2",
+        "FINAL_RAW":    "D2",
+        "FINAL_PLACE_RAW": "D2"
 }
+
 # Поля, которые сравниваются между выгрузками
 COMPARE_FIELDS = [
     'SourceFile',
@@ -1042,17 +1041,6 @@ def main():
     sheet_final_place = "FINAL_PLACE"
     sheet_final_raw = "FINAL_RAW"
     sheet_final_place_raw = "FINAL_PLACE_RAW"
-
-    # --- Карта закрепления (freeze panes) ---
-    freeze_map = {
-        "FINAL":        "D2",  # Первая строка + 3 столбца
-        "FINAL_PLACE":  "D2",
-        "COMPARE":      "E2",  # Первая строка + 4 столбца
-        "BEFORE":       "G2",  # Первая строка + 6 столбцов
-        "AFTER":        "G2",
-        "FINAL_RAW":    "D2",
-        "FINAL_PLACE_RAW": "D2"
-    }
 
     # --- Загрузка данных ---
     logger.info(f"[MAIN] Читаем BEFORE: {os.path.join(SOURCE_DIR, BEFORE_FILENAME)}")
