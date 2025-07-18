@@ -21,7 +21,7 @@ LOG_LEVEL = logging.INFO
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
-LOG_BASENAME = "LOG3"
+LOG_BASENAME = "LOG4"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
 AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
@@ -641,21 +641,6 @@ def process_json_file(filepath):
                 logging.error(LOG_MESSAGES["PROCESS_JSON_RECORD_ERROR"].format(
                     filename=filename, tournament_key=tournament_key, ex=ex))
     return rows
-
-
-def load_json_folder(folder):
-    """Читает все JSON-файлы из папки и объединяет их."""
-    all_rows = []
-    for fname in os.listdir(folder):
-        if fname.lower().endswith('.json'):
-            path = os.path.join(folder, fname)
-            all_rows.extend(process_json_file(path))
-    if not all_rows:
-        logging.warning(LOG_MESSAGES["LOAD_JSON_NO_DATA"].format(folder=folder))
-        return pd.DataFrame()
-    df = pd.DataFrame(all_rows)
-    return df
-
 
 def make_compare_sheet(df_before, df_after, sheet_name):
     logging.info(LOG_MESSAGES["COMPARE_SHEET_START"])
