@@ -40,7 +40,7 @@ SUMMARY_TEMPLATE = (
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
-LOG_BASENAME = "LOG2"
+LOG_BASENAME = "LOG3"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
 AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
@@ -48,17 +48,14 @@ RESULT_EXCEL = "LFA_COMPARE.xlsx"
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-        "t_01_2025-0_08-2_5_2021", "t_01_2025-2_08-2_6_2031", "TOURNAMENT_43_2025_Y01", "TOURNAMENT_66_2024_P02", "TOURNAMENT_67_2024_Y01",
-        "t_01_2025-0_12-1_1_1001", "t_01_2025-0_12-1_1_1002", "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
-        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001", "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061",
-        "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021", "t_01_2025-2_16-1_1_2031", "t_01_2025-0_08-2_3_2021", "t_01_2025-0_08-2_3_2031", "t_01_2025-1_05-1_1_3061",
-        "t_01_2025-2_05-1_1_3071", "t_01_2025-1_08-1_1_3061", "t_01_2025-2_08-1_1_3071", "t_01_2025-0_08-6_1_4001", "t_01_2025-1_15-1_2_2021", "t_01_2025-2_15-1_2_2031",
-        "t_01_2025-1_01-6_4001", "t_01_2025-0_18-7_1_1001", "t_01_2025-0_18-7_2_1001", "t_01_2025-0_18-7_3_1001", "t_01_2025-0_18-7_4_1001", "t_01_2025-1_07-5_1_4001",
-        "t_01_2025-1_07-5_2_4001", "t_01_2025-1_07-5_3_4001", "t_01_2025-1_01-7_1_4001", "t_01_2025-2_01-7_1_4001", "t_01_2025-1_07-5_5_4001", "t_01_2025-1_07-5_6_4001",
-        "t_01_2025-1_07-5_7_4001", "t_01_2025-1_07-5_8_4001", "t_01_2025-1_07-5_9_4001", "t_01_2025-1_07-5_10_4001", "t_01_2025-1_02-1_2_4001", "t_01_2025-0_10-3_1_1001",
-        "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001", "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
-        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-1_17-2_1_4001", "t_01_2025-1_17-2_2_4001", "t_01_2025-1_17-2_3_4001",
-        "t_01_2025-1_17-2_4_4001", "t_01_2025-0_13-1_4_1001", "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
+        "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
+        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001",
+        "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061", "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021",
+        "t_01_2025-1_05-1_1_3061", "t_01_2025-1_01-7_1_4001", "t_01_2025-1_07-5_6_4001",
+        "t_01_2025-1_07-5_7_4001", "t_01_2025-0_10-3_1_1001", "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001",
+        "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
+        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-0_13-1_4_1001",
+        "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
     # Если оставить пустым, то анализируются все турниры.
 ]
 
@@ -157,48 +154,45 @@ STATUS_GROUPS = [
 # --- Все цвета статусов здесь ---
 STATUS_COLORS_DICT = {
     # ==== Новая шкала статусов по ratingCategoryName ====
-    "Новый призёр": '#00B050',              # Ярко-зелёный (появился и сразу стал призёром)
-    "Снизил призовое место": '#FFC7CE',     # Светло-красный (понизился в категории)
-    "Поднялся в рейтинге призеров": '#C6EFCE',  # Светло-зелёный (улучшил категорию среди призёров)
-    "Сохранил призовую позицию": '#D9EAD3', # Светло-зелёный с оттенком (не изменил категорию)
-    "Лишился награды": '#FF0000',           # Красный (выпал из призёров)
-    "Стал призёром": '#00B0F0',             # Ярко-синий (поднялся из вне в призёры)
-    "Без изменений": '#BFBFBF',             # Серый (без изменений, остался вне призов)
-    "Удалённый участник без награды": '#808080',  # Тёмно-серый (исчез из списка, был без награды)
-    "Удалённый призёр": '#808080',          # Тёмно-серый (призёр исчез из списка)
-    "Новый участник без награды": '#E2EFDA',# Бледно-зелёный (новый, но не призёр)
-    "Не участвовал": '#EDEDED',             # Светло-серый (отсутствует в обеих выборках)
+    "Новый призёр":                 {"fill": "#00B050", "font": "#000000"},  # Ярко-зелёный, чёрный текст
+    "Снизил призовое место":        {"fill": "#FFC7CE", "font": "#000000"},  # Светло-красный
+    "Поднялся в рейтинге призеров": {"fill": "#C6EFCE", "font": "#000000"},  # Светло-зелёный
+    "Сохранил призовую позицию":    {"fill": "#D9EAD3", "font": "#000000"},  # Светло-зелёный оттенок
+    "Лишился награды":              {"fill": "#FF0000", "font": "#FFFFFF"},  # Красный, белый текст
+    "Стал призёром":                {"fill": "#00B0F0", "font": "#000000"},  # Ярко-синий
+    "Без изменений":                {"fill": "#BFBFBF", "font": "#000000"},  # Серый
+    "Удалённый участник без награды": {"fill": "#808080", "font": "#FFFFFF"},# Тёмно-серый, белый текст
+    "Удалённый призёр":             {"fill": "#808080", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
+    "Новый участник без награды":   {"fill": "#E2EFDA", "font": "#000000"},  # Бледно-зелёный
+    "Не участвовал":                {"fill": "#EDEDED", "font": "#000000"},  # Светло-серый
 
-    # ==== Прочие статусы — для других колонок (оставляем как есть) ====
-    "Change DOWN": '#FFC7CE',               # Светло-красный (показатель снизился)
-    "Change UP": '#C6EFCE',                 # Светло-зелёный (показатель вырос)
-    "New ADD": '#E2EFDA',                   # Бледно-зелёный (новое значение)
-    "Remove FROM": '#383838',              # Тёмно-серый (удалённое значение)
-    "NO_RANK": "#EDEDED",                   # Светло-серый (нет ранга)
-    "CONT": "#C9DAF8",                      # Светло-голубой (участник присутствует, но без изменения)
-    "Not_used": "#F5F5F5",                  # Почти белый (не используется)
+    # ==== Прочие статусы ====
+    "Change DOWN":                  {"fill": "#FFC7CE", "font": "#000000"},
+    "Change UP":                    {"fill": "#C6EFCE", "font": "#000000"},
+    "New ADD":                      {"fill": "#E2EFDA", "font": "#000000"},
+    "Remove FROM":                  {"fill": "#383838", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
+    "NO_RANK":                      {"fill": "#EDEDED", "font": "#000000"},
+    "CONTESTANT":                   {"fill": "#C9DAF8", "font": "#000000"},
+    "Not_used":                     {"fill": "#F5F5F5", "font": "#C8C8C8"},  # Почти белый, бледно-серый текст
 
-    # ==== Статусы по PLACE рейтингу — оставлены для BANK/TB/GOSB ====
-    'Rang BANK UP': '#C6EFCE',              # Повышение в BANK рейтинге
-    'Rang TB UP': '#C6EFCE',                # Повышение в TB рейтинге
-    'Rang GOSB UP': '#C6EFCE',              # Повышение в GOSB рейтинге
-
-    'Rang BANK DOWN': '#FFC7CE',            # Понижение в BANK рейтинге
-    'Rang TB DOWN': '#FFC7CE',              # Понижение в TB рейтинге
-    'Rang GOSB DOWN': '#FFC7CE',            # Понижение в GOSB рейтинге
-
-    'Rang BANK NEW': '#E2EFDA',             # Новый участник BANK
-    'Rang TB NEW': '#E2EFDA',               # Новый участник TB
-    'Rang GOSB NEW': '#E2EFDA',             # Новый участник GOSB
-
-    'Rang BANK REMOVE': '#383838',          # Удалён из BANK
-    'Rang TB REMOVE': '#383838',            # Удалён из TB
-    'Rang GOSB REMOVE': '#383838',          # Удалён из GOSB
-
-    'Rang BANK NO CHANGE': '#BFBFBF',       # Без изменений в BANK
-    'Rang TB NO CHANGE': '#BFBFBF',         # Без изменений в TB
-    'Rang GOSB NO CHANGE': '#BFBFBF',       # Без изменений в GOSB
+    # ==== Статусы по PLACE рейтингу ====
+    'Rang BANK UP':                 {"fill": "#C6EFCE", "font": "#000000"},
+    'Rang TB UP':                   {"fill": "#C6EFCE", "font": "#000000"},
+    'Rang GOSB UP':                 {"fill": "#C6EFCE", "font": "#000000"},
+    'Rang BANK DOWN':               {"fill": "#FFC7CE", "font": "#000000"},
+    'Rang TB DOWN':                 {"fill": "#FFC7CE", "font": "#000000"},
+    'Rang GOSB DOWN':               {"fill": "#FFC7CE", "font": "#000000"},
+    'Rang BANK NEW':                {"fill": "#E2EFDA", "font": "#000000"},
+    'Rang TB NEW':                  {"fill": "#E2EFDA", "font": "#000000"},
+    'Rang GOSB NEW':                {"fill": "#E2EFDA", "font": "#000000"},
+    'Rang BANK REMOVE':             {"fill": "#383838", "font": "#FFFFFF"},
+    'Rang TB REMOVE':               {"fill": "#383838", "font": "#FFFFFF"},
+    'Rang GOSB REMOVE':             {"fill": "#383838", "font": "#FFFFFF"},
+    'Rang BANK NO CHANGE':          {"fill": "#BFBFBF", "font": "#000000"},
+    'Rang TB NO CHANGE':            {"fill": "#BFBFBF", "font": "#000000"},
+    'Rang GOSB NO CHANGE':          {"fill": "#BFBFBF", "font": "#000000"},
 }
+
 
 # --- Статусы для листа FINAL (категории) ---
 ALL_STATUSES_FINAL = [
@@ -212,7 +206,7 @@ ALL_STATUSES_FINAL = [
     "Новый участник без награды",
     "Без изменений",
     "Удалённый участник без награды",
-    "CONT",
+    "CONTESTANT",
     "Not_used",
     "Не участвовал",
 ]
@@ -223,7 +217,7 @@ ALL_STATUSES_PLACE = [
     "Rang BANK NEW", "Rang TB NEW", "Rang GOSB NEW",
     "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
     "NO_RANK",
-    "CONT",
+    "CONTESTANT",
     "Not_used",
     "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
     "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
@@ -740,29 +734,28 @@ def add_smart_table(writer, df, sheet_name, table_name, freeze_map=None):
 
 def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns):
     """
-    Закрашивает ячейки сравнения в Excel по статусам (openpyxl).
+    Закрашивает ячейки в Excel по статусу, используя словарь status_color_map,
+    где для каждого статуса можно задать цвет фона (fill) и шрифта (font).
+    Если что-то не указано — применяет дефолтные значения.
     """
     worksheet = writer.sheets[sheet_name]
-    dark_bg = APPLY_DARK_BG_COLORS
-    # Cтатусы с белым шрифтом
-    statuses_with_white_font = set()
-    for status, color in status_color_map.items():
-        color_clean = color.lstrip('#').lower()
-        if color_clean in dark_bg:
-            statuses_with_white_font.add(status)
     for col_name in status_columns:
         if col_name not in df.columns:
             continue
-        col_idx = df.columns.get_loc(col_name) + 1  # 1-based
-        for row_idx, value in enumerate(df[col_name], 2):  # 2 = первая строка данных
+        col_idx = df.columns.get_loc(col_name) + 1  # Excel columns 1-based
+        for row_idx, value in enumerate(df[col_name], 2):  # Excel rows start at 2 (1 — заголовок)
             status = str(value)
-            color = status_color_map.get(status)
-            if color:
-                color_clean = color.lstrip('#')
-                cell = worksheet.cell(row=row_idx, column=col_idx)
-                cell.fill = PatternFill(fill_type='solid', fgColor=color_clean)
-                if status in statuses_with_white_font:
-                    cell.font = Font(color="FFFFFF")
+            color_info = status_color_map.get(status, {})
+            fill_color = color_info.get("fill", None)
+            font_color = color_info.get("font", None)
+
+            cell = worksheet.cell(row=row_idx, column=col_idx)
+            if fill_color:
+                cell.fill = PatternFill(fill_type='solid', fgColor=fill_color.lstrip('#'))
+            # Если цвет шрифта явно задан — применяем, иначе оставляем авто (чёрный)
+            if font_color:
+                cell.font = Font(color=font_color.lstrip('#'))
+
 
 def add_status_legend(writer, legend_data, sheet_name=STATUS_LEGEND_SHEET):
     """Добавляет лист Excel с легендой по статусам (универсально), включая группы."""
@@ -797,7 +790,7 @@ def add_status_legend(writer, legend_data, sheet_name=STATUS_LEGEND_SHEET):
 
 
 
-def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log):
+def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log, sheet_name="FINAL"):
     """Строит итоговый лист по всем турнирам и сотрудникам.
     Оптимизированная версия: lookup-структуры вместо фильтрации.
     """
@@ -827,6 +820,7 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     ]
 
     result_rows = []
+    status_counter = {t_id: {} for t_id in tournaments}
 
     for emp_idx, (_, emp) in enumerate(employees.iterrows(), 1):
         emp_key = (emp['employeeNumber'], emp['lastName'], emp['firstName'])
@@ -858,15 +852,23 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
             if best_val is not None:
                 final_value = best_val
             elif was_in_before or was_in_after:
-                final_value = "CONT"
+                final_value = "CONTESTANT"
             else:
                 final_value = "Not_used"
+
+            # Счётчик по статусам для логов
+            status_counter[t_id][final_value] = status_counter[t_id].get(final_value, 0) + 1
 
             row[t_id] = final_value
         result_rows.append(row)
 
     final_df = pd.DataFrame(result_rows)
     log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
+    # Подробное логирование по каждому турниру
+    for t_id in tournaments:
+        log.info(f"[{sheet_name}] tournamentId={t_id} - распределение статусов:")
+        for status, count in status_counter[t_id].items():
+            log.info(f"[{sheet_name}]     {status}: {count}")
     return final_df, tournaments
 
 def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_after, log, sheet_name="FINAL_PLACE"):
@@ -920,7 +922,7 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
             if value is not None:
                 final_value = value
             elif was_in_before or was_in_after:
-                final_value = "CONT"
+                final_value = "CONTESTANT"
             else:
                 final_value = "Not_used"
 
@@ -966,7 +968,7 @@ def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place
     all_statuses — список возможных статусов (по порядку важности для вывода).
     is_final_place — если True, не считаем группы.
     """
-    exclude = {"Not_used", "CONT"}
+    exclude = {"Not_used", "CONTESTANT"}
     stat_names = [s for s in all_statuses if s not in exclude]
     group_names = [g[0] for g in STATUS_GROUPS] if not is_final_place else []
 
@@ -1098,7 +1100,7 @@ def main():
     # --- Финальная таблица (FINAL) ---
     t_beg_final = datetime.now()
     final_df, tournaments = build_final_sheet_fast(
-        compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger
+        compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger, sheet_name=sheet_final
     )
     logger.info(f"[MAIN] Построен FINAL: {final_df.shape}")
     # Финальная таблица по place (FINAL_PLACE)
