@@ -945,26 +945,29 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
 
 def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('stat_', 'grp_')):
     ws = writer.sheets[sheet_name]
-    # Перебор названий колонок: ищем все, что начинается на stat_ или grp_
-    header_row = 1
-    col_map = {cell.value: cell.column for cell in ws[header_row]}
-    for col_name, col_idx in col_map.items():
-        if any(col_name.startswith(prefix) for prefix in stat_prefixes):
-            col_letter = get_column_letter(col_idx)
-            # Диапазон данных (без заголовка)
-            first_row = header_row + 1
-            last_row = ws.max_row
-            rng = f"{col_letter}{first_row}:{col_letter}{last_row}"
-            # Добавляем шкалу: green-yellow-red
-            color_rule = ColorScaleRule(
-                start_type='min', start_color='63BE7B',
-                mid_type='percentile', mid_value=50, mid_color='FFEB84',
-                end_type='max', end_color='F8696B'
+    from openpyxl.styles import PatternFill
+
+    for col in ws.iter_cols(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        col_letter = col[0].column_letter
+        header = ws[f"{col_letter}1"].value
+        if not header or not any(header.startswith(prefix) for prefix in stat_prefixes):
+            continue
+        col_range = f"{col_letter}2:{col_letter}{ws.max_row}"
+
+        # 1. Правило: если 0 — белый
+        ws.conditional_formatting.add(
+            col_range,
+            CellIsRule(operator='equal', formula=['0'], fill=PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"))
+        )
+        # 2. Цветовая шкала для >0
+        ws.conditional_formatting.add(
+            col_range,
+            ColorScaleRule(
+                start_type='min', start_color='63BE7B',  # зелёный
+                mid_type='percentile', mid_value=50, mid_color='FFEB84',  # жёлтый
+                end_type='max', end_color='F8696B',  # красный
             )
-            ws.conditional_formatting.add(rng, color_rule)
-            # Не окрашивать 0 (правило с приоритетом)
-            zero_rule = CellIsRule(operator='equal', formula=['0'], stopIfTrue=True)
-            ws.conditional_formatting.add(rng, zero_rule)
+        )
 
 def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name="", suffix=""):
     """
