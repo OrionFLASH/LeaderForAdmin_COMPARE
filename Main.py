@@ -21,7 +21,7 @@ LOG_LEVEL = logging.INFO
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
-LOG_BASENAME = "LOG5"
+LOG_BASENAME = "LOG_INFO"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
 AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
@@ -269,8 +269,8 @@ ALL_STATUSES_PLACE = [
     "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
 ]
 
-# Какие колонки раскрашивать (для передачи в apply_status_colors)
-STATUS_COLOR_COLUMNS = [
+# --- Ключевые статусные колонки для сравнения, фильтрации, раскраски ---
+COMPARE_STATUS_COLUMNS = [
     'indicatorValue_Compare',
     'divisionRatings_BANK_placeInRating_Compare',
     'divisionRatings_TB_placeInRating_Compare',
@@ -279,6 +279,9 @@ STATUS_COLOR_COLUMNS = [
     'divisionRatings_TB_ratingCategoryName_Compare',
     'divisionRatings_GOSB_ratingCategoryName_Compare'
 ]
+
+# Какие колонки раскрашивать (для передачи в apply_status_colors)
+STATUS_COLOR_COLUMNS = COMPARE_STATUS_COLUMNS
 
 # --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
 STATUS_LEGEND_DATA = [
@@ -415,7 +418,7 @@ def setup_logger(log_dir, basename):
     if logger.hasHandlers():
         logger.handlers.clear()
     fh = logging.FileHandler(log_path, encoding='utf-8', mode='a')
-    fh.setLevel(logging.DEBUG)
+    fh.setLevel(LOG_LEVEL)
     ch = logging.StreamHandler()
     ch.setLevel(LOG_LEVEL)
     fmt = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s', "%Y-%m-%d %H:%M:%S")
@@ -679,15 +682,7 @@ def make_compare_sheet(df_before, df_after, sheet_name):
     ]:
         compare_df[f"{col}_Compare"] = compare_df.apply(lambda row: category_compare_enhanced(row, col), axis=1)
 
-    final_cols = COMPARE_KEYS + [
-        'indicatorValue_Compare',
-        'divisionRatings_BANK_placeInRating_Compare',
-        'divisionRatings_TB_placeInRating_Compare',
-        'divisionRatings_GOSB_placeInRating_Compare',
-        'divisionRatings_BANK_ratingCategoryName_Compare',
-        'divisionRatings_TB_ratingCategoryName_Compare',
-        'divisionRatings_GOSB_ratingCategoryName_Compare'
-    ] + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
+    final_cols = COMPARE_KEYS + COMPARE_STATUS_COLUMNS + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
     compare_df = compare_df.reindex(columns=final_cols)
 
     # --- Фильтрация по tournamentId ---
@@ -696,15 +691,7 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         logging.info(LOG_MESSAGES["COMPARE_SHEET_FILTERED"].format(count=len(compare_df)))
 
     # --- Фильтрация строк без изменений ---
-    status_cols = [
-        'indicatorValue_Compare',
-        'divisionRatings_BANK_placeInRating_Compare',
-        'divisionRatings_TB_placeInRating_Compare',
-        'divisionRatings_GOSB_placeInRating_Compare',
-        'divisionRatings_BANK_ratingCategoryName_Compare',
-        'divisionRatings_TB_ratingCategoryName_Compare',
-        'divisionRatings_GOSB_ratingCategoryName_Compare'
-    ]
+    status_cols = COMPARE_STATUS_COLUMNS
 
     def is_any_change(row):
         for col in status_cols:
