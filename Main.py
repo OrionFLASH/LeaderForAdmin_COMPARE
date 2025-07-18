@@ -302,16 +302,6 @@ STATUS_COLOR_COLUMNS = [
 ]
 
 # --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
-STATUS_RU_DICT = {
-    "ENTERED_PRIZE":      ("ПОПАЛ В ПРИЗЁРЫ", "Был вне призёров, стал призёром. Это хорошо."),
-    "STAYED_OUT":         ("ОСТАЛСЯ ВНЕ ПРИЗЁРОВ", "Не был призёром и не стал. Без изменений, но не лучший результат."),
-    "DROPPED_OUT_PRIZE":  ("ВЫБЫЛ ИЗ ПРИЗЁРОВ", "Был призёром, стал вне призёров. Это плохо."),
-    "LOST_VIEW":          ("ПРОПАЛ ИЗ ВИДА", "Был призёром, теперь отсутствует в итоговом файле."),
-    "PRIZE_UNCHANGED":    ("ПРИЗЁР БЕЗ ИЗМЕНЕНИЙ", "Был призёром, остался на том же месте."),
-    "PRIZE_UP":           ("УЛУЧШИЛ ПРИЗОВОЕ МЕСТО", "Был призёром и стал лучше (например, с бронзы на золото)."),
-    "PRIZE_DOWN":         ("ПОНИЗИЛСЯ В РЕЙТИНГЕ ПРИЗЁРОВ", "Был призёром и опустился на худшее призовое место."),
-}
-
 STATUS_LEGEND_DATA = [
     ("Новый призёр", "Участник впервые попал в призёры", "#00B050"),
     ("Снизил призовое место", "Участник стал хуже: например, с серебра на бронзу", "#FFC7CE"),
@@ -397,6 +387,7 @@ CATEGORY_RANK_MAP = {
     "": 4,
     None: 4
 }
+
 STATUS_RATING_CATEGORY = {
     "in2prize": "ENTERED_PRIZE",
     "stay_out": "STAYED_OUT",
@@ -707,16 +698,8 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         after_cat = row.get(f'AFTER_{colname}')
         before_present = 0 if pd.isnull(before_cat) or before_cat == "" else 1
         after_present = 0 if pd.isnull(after_cat) or after_cat == "" else 1
-        cat_map = {
-            "Вы в лидерах": 1,
-            "Серебро": 2,
-            "Бронза": 3,
-            "Нужно поднажать": 4,
-            "": 4,
-            None: 4
-        }
-        b_cat = cat_map.get(before_cat, None) if before_present else None
-        a_cat = cat_map.get(after_cat, None) if after_present else None
+        b_cat = CATEGORY_RANK_MAP.get(before_cat, None) if before_present else None
+        a_cat = CATEGORY_RANK_MAP.get(after_cat, None) if after_present else None
         key = (before_present, b_cat, after_present, a_cat)
         result = category_compare_lookup.get(key)
         return result["desc_ru"] if result else ""
