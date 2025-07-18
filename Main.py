@@ -963,9 +963,9 @@ def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('st
         ws.conditional_formatting.add(
             col_range,
             ColorScaleRule(
-                start_type='min', start_color='63BE7B',  # зелёный
+                start_type='min', start_color='F8696B',  # красный
                 mid_type='percentile', mid_value=50, mid_color='FFEB84',  # жёлтый
-                end_type='max', end_color='F8696B',  # красный
+                end_type='max', end_color='63BE7B',  # зелёный
             )
         )
 
@@ -1150,20 +1150,27 @@ def main():
     with pd.ExcelWriter(out_excel, engine='openpyxl') as writer:
         # Контрольные листы (RAW, не обязательны, но полезны)
         add_smart_table(writer, final_df, sheet_final_raw, "SMART_" + sheet_final_raw, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист FINAL_RAW ({final_df.shape[0]} строк).")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_final_raw} ({final_df.shape[0]} строк).")
+
         add_smart_table(writer, final_place_df, sheet_final_place_raw, "SMART_" + sheet_final_place_raw, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист FINAL_PLACE_RAW ({final_place_df.shape[0]} строк).")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_final_place_raw} ({final_place_df.shape[0]} строк).")
+
         # Основные листы
         add_smart_table(writer, df_before, sheet_before, "SMART_" + sheet_before, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист BEFORE.")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_before} ({df_before.shape[0]} строк).")
+
         add_smart_table(writer, df_after, sheet_after, "SMART_" + sheet_after, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист AFTER.")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_after} ({df_after.shape[0]} строк).")
+
         add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист COMPARE.")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_compare} ({compare_df.shape[0]} строк).")
+
         add_smart_table(writer, final_df_stat, sheet_final, "SMART_" + sheet_final, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист FINAL (итоговый).")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_final} ({final_df_stat.shape[0]} строк).")
+
         add_smart_table(writer, final_place_df_stat, sheet_final_place, "SMART_" + sheet_final_place, freeze_map=freeze_map)
-        logger.info(f"[MAIN] Экспортирован лист FINAL_PLACE (итоговый).")
+        logger.info(f"[MAIN] Экспортирован лист {sheet_final_place} ({final_place_df_stat.shape[0]} строк).")
+
         apply_stat_grp_conditional_formatting(writer, sheet_final)
         logger.info(f"[MAIN] Применено условное форматирование к stat_/grp_ в листе {sheet_final}.")
         apply_stat_grp_conditional_formatting(writer, sheet_final_place)
