@@ -14,12 +14,31 @@ from openpyxl.formatting.rule import ColorScaleRule, CellIsRule
 # LOG_LEVEL определяет глубину вывода в консоль (INFO или DEBUG)
 LOG_LEVEL = logging.INFO
 
-# Цвет, применяемый по умолчанию, если статус неизвестен
-DEFAULT_STATUS_COLOR = "#FFFFFF"
-
 # Текстовые обозначения этапов
 FINAL_START_MESSAGE = "=== [FINAL] Построение итоговой сводной таблицы ==="
-STATUS_LEGEND_SHEET = "STATUS_LEGEND"
+
+LOG_MESSAGES = {
+    "LOGGER_SESSION_START": "\n-------- NEW LOG START AT {date} ({time}) -------\n",
+    "LOGGER_ACTIVE_FILE": "Лог-файл активен (append): {path}",
+    "DATAFRAME_EMPTY": "[{label}] DataFrame пустой.",
+    "DATAFRAME_SHAPE": "[{label}] строк: {n_rows}, колонок: {n_cols}",
+    "TOURNAMENT_ID_LIST": "[{label}] tournamentId всего: {count} -> {tids}",
+    "TOURNAMENT_ID_PERSON_COUNT": "[{label}] tournamentId={tid}: людей={count}",
+    "DATAFRAME_COLUMNS": "[{label}] Все поля: {cols}",
+    "COMPARE_TOTAL_ROWS": "[COMPARE] Строк всего: {n_rows}",
+    "COMPARE_COLUMN_COUNTS": "[COMPARE] {col}: {counts}",
+    "PARSE_FLOAT_ERROR": "[parse_float] Ошибка преобразования '{val}' в float: {ex} | Context: {context}",
+    "PARSE_INT_ERROR": "[parse_int] Ошибка преобразования '{val}' в int: {ex} | Context: {context}",
+    "FLATTEN_LEADER_START": "Начата обработка лидера: employee={employee} для турнира {tournament_id}, файл {source_file}",
+    "PROCESS_JSON_LOAD_ERROR": "Ошибка загрузки файла {filepath}: {ex}",
+    "PROCESS_JSON_BAD_RECORD": "[process_json_file] Некорректная запись в турнире {tournament_key}: {record}",
+    "PROCESS_JSON_EMPTY_LEADERS": "Турнир {tournament_id} из файла {filename}: leaders пуст, добавлена заглушка",
+    "PROCESS_JSON_FLATTEN_LEADER_ERROR": "[flatten_leader] Ошибка обработки лидера в файле {filename} турнир {tournament_id} employee {employee}: {ex}",
+    "PROCESS_JSON_RECORD_ERROR": "[process_json_file] Ошибка обработки записи в файле {filename}, турнир {tournament_key}: {ex}",
+    "LOAD_JSON_NO_DATA": "Нет данных для экспорта из папки {folder}",
+}
+
+
 
 # Шаблон итоговой строки
 SUMMARY_TEMPLATE = (
@@ -283,6 +302,7 @@ SHEET_NAMES = {
     "final_place": "FINAL_PLACE",
     "final_raw": "FINAL_RAW",
     "final_place_raw": "FINAL_PLACE_RAW",
+    "status_legend": "STATUS_LEGEND",
 }
 
 
@@ -383,7 +403,7 @@ def setup_logger(log_dir, basename):
     log_path = os.path.join(log_dir, f"{basename}_{day_str}.log")
     # Добавляем маркер начала новой сессии
     with open(log_path, "a", encoding="utf-8") as logf:
-        logf.write(f"\n-------- NEW LOG START AT {day_str} ({time_str}) -------\n")
+        logf.write(LOG_MESSAGES["LOGGER_SESSION_START"].format(date=day_str, time=time_str))
     # Стандартное подключение логгера
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -398,32 +418,33 @@ def setup_logger(log_dir, basename):
     ch.setFormatter(fmt)
     logger.addHandler(fh)
     logger.addHandler(ch)
-    logging.info(f"Лог-файл активен (append): {log_path}")
+    logging.info(LOG_MESSAGES["LOGGER_ACTIVE_FILE"].format(path=log_path))
     return logger
 
 def log_data_stats(df, label):
     if df.empty:
-        logging.info(f"[{label}] DataFrame пустой.")
+        logging.info(LOG_MESSAGES["DATAFRAME_EMPTY"].format(label=label))
         return
     n_rows = len(df)
     n_cols = len(df.columns)
     tournament_counts = df['tournamentId'].value_counts().to_dict()
     unique_tids = list(df['tournamentId'].unique())
-    logging.info(f"[{label}] строк: {n_rows}, колонок: {n_cols}")
-    logging.info(f"[{label}] tournamentId всего: {len(unique_tids)} -> {unique_tids}")
+    logging.info(LOG_MESSAGES["DATAFRAME_SHAPE"].format(label=label, n_rows=n_rows, n_cols=n_cols))
+    logging.info(LOG_MESSAGES["TOURNAMENT_ID_LIST"].format(label=label, count=len(unique_tids), tids=unique_tids))
     for tid in unique_tids:
         count = tournament_counts.get(tid, 0)
-        logging.debug(f"[{label}] tournamentId={tid}: людей={count}")
-    logging.info(f"[{label}] Все поля: {list(df.columns)}")
+        logging.debug(LOG_MESSAGES["TOURNAMENT_ID_PERSON_COUNT"].format(label=label, tid=tid, count=count))
+    logging.info(LOG_MESSAGES["DATAFRAME_COLUMNS"].format(label=label, cols=list(df.columns)))
+
 
 def log_compare_stats(compare_df):
     """Выводит сводную статистику по статусным колонкам таблицы сравнения."""
     n_rows = len(compare_df)
-    logging.info(f"[COMPARE] Строк всего: {n_rows}")
+    logging.info(LOG_MESSAGES["COMPARE_TOTAL_ROWS"].format(n_rows=n_rows))
     for col in STATUS_COLOR_COLUMNS:
         if col in compare_df.columns:
             counts = compare_df[col].value_counts(dropna=False).to_dict()
-            logging.info(f"[COMPARE] {col}: {counts}")
+            logging.info(LOG_MESSAGES["COMPARE_COLUMN_COUNTS"].format(col=col, counts=counts))
 
 
 def parse_float(val, context=None):
@@ -446,9 +467,10 @@ def parse_float(val, context=None):
         return round(float(s), 3)
     except Exception as ex:
         logging.error(
-            f"[parse_float] Ошибка преобразования '{val}' в float: {ex} | Context: {context}"
+            LOG_MESSAGES["PARSE_FLOAT_ERROR"].format(val=val, ex=ex, context=context)
         )
         return None
+
 
 def parse_int(val, context=None):
     """Преобразует значение в int, если возможно."""
@@ -463,13 +485,20 @@ def parse_int(val, context=None):
         return int(s)
     except Exception as ex:
         logging.error(
-            f"[parse_int] Ошибка преобразования '{val}' в int: {ex} | Context: {context}"
+            LOG_MESSAGES["PARSE_INT_ERROR"].format(val=val, ex=ex, context=context)
         )
         return None
 
+
 def flatten_leader(leader, tournament_id, source_file):
     """Разворачивает запись лидера в плоскую структуру для DataFrame."""
-    context = f"файл={source_file}, турнир={tournament_id}, employee={leader.get('employeeNumber', 'N/A')}"
+    employee = leader.get('employeeNumber', 'N/A')
+    context = f"файл={source_file}, турнир={tournament_id}, employee={employee}"
+    # Лог: запуск обработки лидера
+    logging.debug(LOG_MESSAGES["FLATTEN_LEADER_START"].format(
+        employee=employee, tournament_id=tournament_id, source_file=source_file
+    ))
+
     row = {
         'SourceFile': source_file,
         'tournamentId': tournament_id
@@ -505,6 +534,7 @@ def flatten_leader(leader, tournament_id, source_file):
             row[f] = None
     return row
 
+
 def process_json_file(filepath):
     """Загружает JSON-файл и превращает его в список словарей."""
     filename = os.path.basename(filepath)
@@ -513,23 +543,24 @@ def process_json_file(filepath):
         with open(filepath, 'r', encoding='utf-8') as f:
             js = json.load(f)
     except Exception as ex:
-        logging.error(f"Ошибка загрузки файла {filepath}: {ex}")
+        logging.error(LOG_MESSAGES["PROCESS_JSON_LOAD_ERROR"].format(filepath=filepath, ex=ex))
         return []
     # Перебор турниров
     for tournament_key, records in js.items():
-        # Универсальная обработка: dict, list, str, None
         entries = []
         if isinstance(records, list):
             entries = records
         elif isinstance(records, dict):
             entries = [records]
         else:
-            logging.warning(f"[process_json_file] Некорректная запись в турнире {tournament_key}: {repr(records)[:100]}")
+            logging.warning(LOG_MESSAGES["PROCESS_JSON_BAD_RECORD"].format(
+                tournament_key=tournament_key, record=repr(records)[:100]))
             continue
         for record in entries:
             try:
                 if not isinstance(record, dict):
-                    logging.warning(f"[process_json_file] Некорректная запись в турнире {tournament_key}: {repr(record)[:100]}")
+                    logging.warning(LOG_MESSAGES["PROCESS_JSON_BAD_RECORD"].format(
+                        tournament_key=tournament_key, record=repr(record)[:100]))
                     continue
                 tournament = record.get("body", {}).get("tournament", {})
                 tournament_id = tournament.get("tournamentId", tournament_key)
@@ -538,7 +569,6 @@ def process_json_file(filepath):
                     leaders = list(leaders.values())
                 elif not isinstance(leaders, list):
                     leaders = []
-                # === Обработка случая с пустым leaders ===
                 if not leaders:
                     stub = {
                         'SourceFile': filename,
@@ -550,24 +580,22 @@ def process_json_file(filepath):
                     for field in FLOAT_FIELDS + INT_FIELDS:
                         stub[field] = None
                     rows.append(stub)
-                    logging.info(f'Турнир {tournament_id} из файла {filename}: leaders пуст, добавлена заглушка')
+                    logging.info(LOG_MESSAGES["PROCESS_JSON_EMPTY_LEADERS"].format(
+                        tournament_id=tournament_id, filename=filename))
                     continue
-
-                # === Обработка нормальных лидеров ===
                 for leader in leaders:
                     try:
                         row = flatten_leader(leader, tournament_id, filename)
                         rows.append(row)
                     except Exception as ex:
-                        logging.error(
-                            f"[flatten_leader] Ошибка обработки лидера в файле {filename} "
-                            f"турнир {tournament_id} employee {leader.get('employeeNumber', 'N/A')}: {ex}"
-                        )
+                        logging.error(LOG_MESSAGES["PROCESS_JSON_FLATTEN_LEADER_ERROR"].format(
+                            filename=filename, tournament_id=tournament_id,
+                            employee=leader.get('employeeNumber', 'N/A'), ex=ex))
             except Exception as ex:
-                logging.error(
-                    f"[process_json_file] Ошибка обработки записи в файле {filename}, турнир {tournament_key}: {ex}"
-                )
+                logging.error(LOG_MESSAGES["PROCESS_JSON_RECORD_ERROR"].format(
+                    filename=filename, tournament_key=tournament_key, ex=ex))
     return rows
+
 
 def load_json_folder(folder):
     """Читает все JSON-файлы из папки и объединяет их."""
@@ -577,10 +605,11 @@ def load_json_folder(folder):
             path = os.path.join(folder, fname)
             all_rows.extend(process_json_file(path))
     if not all_rows:
-        logging.warning(f'Нет данных для экспорта из папки {folder}')
+        logging.warning(LOG_MESSAGES["LOAD_JSON_NO_DATA"].format(folder=folder))
         return pd.DataFrame()
     df = pd.DataFrame(all_rows)
     return df
+
 
 def make_compare_sheet(df_before, df_after, sheet_name):
     join_keys = COMPARE_KEYS
@@ -767,7 +796,7 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
                 cell.font = Font(color=font_color.lstrip('#'))
 
 
-def add_status_legend(writer, legend_data, sheet_name=STATUS_LEGEND_SHEET):
+def add_status_legend(writer, legend_data, sheet_name=SHEET_NAMES['status_legend']):
     """Добавляет лист Excel с легендой по статусам (универсально), включая группы."""
     # Добавляем группы в легенду
     for group, desc in GROUP_DESC_RU:
@@ -1201,7 +1230,7 @@ def main():
         )
         logger.info(f"[MAIN] Применена цветовая раскраска к {SHEET_NAMES['compare']}.")
 
-        add_status_legend(writer, STATUS_LEGEND_DATA, sheet_name=STATUS_LEGEND_SHEET)
+        add_status_legend(writer, STATUS_LEGEND_DATA, sheet_name=SHEET_NAMES['status_legend'])
         logger.info(f"[MAIN] Добавлен лист с легендой статусов.")
 
         # Выбор листа FINAL как активного при открытии файла
