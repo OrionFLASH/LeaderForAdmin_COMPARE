@@ -8,6 +8,7 @@ import traceback
 from datetime import datetime
 from openpyxl.styles import PatternFill, Font
 from openpyxl.utils import get_column_letter
+from openpyxl.formatting.rule import ColorScaleRule, CellIsRule
 
 # --- Параметры логирования ---
 # LOG_LEVEL определяет глубину вывода в консоль (INFO или DEBUG)
@@ -942,6 +943,29 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     return final_place_df, tournaments
 
 
+def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('stat_', 'grp_')):
+    ws = writer.sheets[sheet_name]
+    # Перебор названий колонок: ищем все, что начинается на stat_ или grp_
+    header_row = 1
+    col_map = {cell.value: cell.column for cell in ws[header_row]}
+    for col_name, col_idx in col_map.items():
+        if any(col_name.startswith(prefix) for prefix in stat_prefixes):
+            col_letter = get_column_letter(col_idx)
+            # Диапазон данных (без заголовка)
+            first_row = header_row + 1
+            last_row = ws.max_row
+            rng = f"{col_letter}{first_row}:{col_letter}{last_row}"
+            # Добавляем шкалу: green-yellow-red
+            color_rule = ColorScaleRule(
+                start_type='min', start_color='63BE7B',
+                mid_type='percentile', mid_value=50, mid_color='FFEB84',
+                end_type='max', end_color='F8696B'
+            )
+            ws.conditional_formatting.add(rng, color_rule)
+            # Не окрашивать 0 (правило с приоритетом)
+            zero_rule = CellIsRule(operator='equal', formula=['0'], stopIfTrue=True)
+            ws.conditional_formatting.add(rng, zero_rule)
+
 def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name="", suffix=""):
     """
     Добавляет справа в датафрейм df колонки по всем статусам.
@@ -1137,6 +1161,10 @@ def main():
         logger.info(f"[MAIN] Экспортирован лист FINAL (итоговый).")
         add_smart_table(writer, final_place_df_stat, sheet_final_place, "SMART_" + sheet_final_place, freeze_map=freeze_map)
         logger.info(f"[MAIN] Экспортирован лист FINAL_PLACE (итоговый).")
+        pply_stat_grp_conditional_formatting(writer, sheet_final)
+        logger.info(f"[MAIN] Применено условное форматирование к stat_/grp_ в листе {sheet_final}.")
+        apply_stat_grp_conditional_formatting(writer, sheet_final_place)
+        logger.info(f"[MAIN] Применено условное форматирование к stat_/grp_ в листе {sheet_final_place}.")
 
         # Цветовая раскраска
         apply_status_colors(
