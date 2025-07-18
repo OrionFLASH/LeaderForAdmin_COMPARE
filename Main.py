@@ -14,8 +14,17 @@ from openpyxl.formatting.rule import ColorScaleRule, CellIsRule
 # LOG_LEVEL определяет глубину вывода в консоль (INFO или DEBUG)
 LOG_LEVEL = logging.INFO
 
-# Текстовые обозначения этапов
-FINAL_START_MESSAGE = "=== [FINAL] Построение итоговой сводной таблицы ==="
+# === Константы путей и имён файлов ===
+# Здесь задаются пути к папкам с исходниками, результатами и логами,
+# а также имена входных/выходных файлов. При необходимости их можно
+# поменять под свои каталоги.
+SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
+TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
+LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
+LOG_BASENAME = "LOG3"
+BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
+AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
+RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
 LOG_MESSAGES = {
     "LOGGER_SESSION_START": "\n-------- NEW LOG START AT {date} ({time}) -------\n",
@@ -88,16 +97,7 @@ LOG_MESSAGES = {
     "MAIN_FINAL_SET_ACTIVE_SHEET_FAIL": "[MAIN] Не удалось установить лист {sheet} активным: {ex}",
 }
 
-
-
 # Шаблон итоговой строки
-SUMMARY_TEMPLATE = (
-    "[SUMMARY] турниров: {tourn}; сотрудников: {emps}; "
-    "изменений: {changes}; load_before: {t1:.2f}s; "
-    "load_after: {t2:.2f}s; compare: {t3:.2f}s; final: {t4:.2f}s; "
-    "export: {t5:.2f}s; total: {tt:.2f}s"
-)
-
 SUMMARY_TEMPLATE_EXT = (
     "[SUMMARY] турниров: {tourn}; сотрудников: {emps}; изменений: {changes};\n"
     "Время: load_before: {t1:.2f}s; load_after: {t2:.2f}s; compare: {t3:.2f}s; final: {t4:.2f}s; export: {t5:.2f}s; total: {tt:.2f}s\n"
@@ -105,18 +105,6 @@ SUMMARY_TEMPLATE_EXT = (
     "FINAL_PLACE (распределение по статусам): {final_place_statuses}\n"
     "FINAL (распределение по группам): {final_groups}\n"
 )
-
-# === Константы путей и имён файлов ===
-# Здесь задаются пути к папкам с исходниками, результатами и логами,
-# а также имена входных/выходных файлов. При необходимости их можно
-# поменять под свои каталоги.
-SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
-TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
-LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
-LOG_BASENAME = "LOG3"
-BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
-AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
-RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
@@ -1176,24 +1164,20 @@ def main():
     ts = now.strftime("%Y%m%d_%H%M%S")
 
     # --- Загрузка данных ---
-    logger.info(LOG_MESSAGES["MAIN_BEFORE_READ"].format(
-        sheet=SHEET_NAMES['before'], path=os.path.join(SOURCE_DIR, BEFORE_FILENAME)))
+    logger.info(LOG_MESSAGES["MAIN_BEFORE_READ"].format(sheet=SHEET_NAMES['before'], path=os.path.join(SOURCE_DIR, BEFORE_FILENAME)))
     t_beg_before = datetime.now()
     rows_before = process_json_file(os.path.join(SOURCE_DIR, BEFORE_FILENAME))
     df_before = pd.DataFrame(rows_before)
     t_end_before = datetime.now()
-    logger.info(LOG_MESSAGES["MAIN_BEFORE_LOADED"].format(
-        count=len(df_before), sheet=SHEET_NAMES['before']))
+    logger.info(LOG_MESSAGES["MAIN_BEFORE_LOADED"].format(count=len(df_before), sheet=SHEET_NAMES['before']))
     log_data_stats(df_before, SHEET_NAMES['before'])
 
-    logger.info(LOG_MESSAGES["MAIN_AFTER_READ"].format(
-        sheet=SHEET_NAMES['after'], path=os.path.join(SOURCE_DIR, AFTER_FILENAME)))
+    logger.info(LOG_MESSAGES["MAIN_AFTER_READ"].format(sheet=SHEET_NAMES['after'], path=os.path.join(SOURCE_DIR, AFTER_FILENAME)))
     t_beg_after = datetime.now()
     rows_after = process_json_file(os.path.join(SOURCE_DIR, AFTER_FILENAME))
     df_after = pd.DataFrame(rows_after)
     t_end_after = datetime.now()
-    logger.info(LOG_MESSAGES["MAIN_AFTER_LOADED"].format(
-        count=len(df_after), sheet=SHEET_NAMES['after']))
+    logger.info(LOG_MESSAGES["MAIN_AFTER_LOADED"].format(count=len(df_after), sheet=SHEET_NAMES['after']))
     log_data_stats(df_after, SHEET_NAMES['after'])
 
     # --- Анализ турниров ---
