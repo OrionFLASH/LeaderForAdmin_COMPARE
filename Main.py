@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import re
 import logging
+import traceback
 # import sys
 from datetime import datetime
 from openpyxl.styles import PatternFill, Font
@@ -88,6 +89,14 @@ COMPARE_KEYS = [
     'lastName',
     'firstName',
 ]
+
+FREEZE_MAP = {
+    "FINAL":        "D2",  # Первая строка + 3 столбца
+    "FINAL_PLACE":  "D2",
+    "COMPARE":      "E2",  # Первая строка + 4 столбца
+    "BEFORE":       "G2",  # Первая строка + 6 столбцов
+    "AFTER":        "G2",
+}
 # Поля, которые сравниваются между выгрузками
 COMPARE_FIELDS = [
     'SourceFile',
@@ -116,6 +125,34 @@ FLOAT_FIELDS = [
     'indicatorValue',
     'successValue',
 ]
+
+# Все возможные статусы для итоговых колонок (FINAL)
+FINAL_STATUS_LIST = [
+    "Новый призёр", "Поднялся в рейтинге призеров", "Стал призёром", "Сохранил призовую позицию",
+    "Снизил призовое место", "Лишился награды", "Удалённый призёр", "Без изменений",
+    "Новый участник без награды", "Удалённый участник без награды", "Не участвовал"
+]
+
+# Для FINAL_PLACE нужны только PLACE-статусы:
+FINAL_PLACE_STATUS_LIST = [
+    "Rang BANK UP", "Rang TB UP", "Rang GOSB UP",
+    "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
+    "Rang BANK NEW", "Rang TB NEW", "Rang GOSB NEW",
+    "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
+    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE"
+]
+
+STATUS_GROUPS = [
+    ("Группа 1", ["Новый призёр", "Поднялся в рейтинге призеров"]),
+    ("Группа 2", ["Стал призёром"]),
+    ("Группа 3", ["Сохранил призовую позицию"]),
+    ("Группа 4", ["Снизил призовое место"]),
+    ("Группа 5", ["Лишился награды", "Удалённый призёр"]),
+    ("Группа 6", ["Без изменений", "Новый участник без награды"]),
+    ("Группа 7", ["Удалённый участник без награды"]),
+    ("Группа 8", ["Не участвовал"]),
+]
+
 
 # --- Все цвета статусов здесь ---
 STATUS_COLORS_DICT = {
@@ -229,6 +266,20 @@ STATUS_LEGEND_DATA = [
     ("Новый участник без награды", "Появился впервые, но не стал призёром", "#E2EFDA"),
     ("Не участвовал", "Отсутствует в обеих выборках", "#EDEDED"),
 ]
+
+# --- Группы для FINAL и их описания для легенды и GRP_MAX ---
+GROUP_DESC_RU = [
+    ("Группа 1", "Поднялся в рейтинге призеров, Новый призёр"),
+    ("Группа 2", "Стал призёром"),
+    ("Группа 3", "Сохранил призовую позицию"),
+    ("Группа 4", "Снизил призовое место"),
+    ("Группа 5", "Лишился награды, Удалённый призёр"),
+    ("Группа 6", "Без изменений, Новый участник без награды"),
+    ("Группа 7", "Удалённый участник без награды"),
+    ("Группа 8", "Не участвовал"),
+]
+GROUP_DESC_DICT = dict(GROUP_DESC_RU)
+
 
 
 # Статусы для сравнения (логика и сокращения)
@@ -648,17 +699,19 @@ def make_compare_sheet(df_before, df_after, sheet_name):
     return compare_df, sheet_name
 
 
-def add_smart_table(writer, df, sheet_name, table_name):
+def add_smart_table(writer, df, sheet_name, table_name, freeze_map=None):
     """
     Экспортирует DataFrame на лист Excel с автоформатированием:
     - Жирные заголовки
     - Автоширина столбцов
+    - Включённый автофильтр
+    - Закрепление областей (freeze_map: dict {'SHEET_NAME': 'CELL'})
     """
     df.to_excel(writer, sheet_name=sheet_name, index=False)
     try:
         worksheet = writer.sheets[sheet_name]
 
-        # Сделать заголовок жирным
+        # Жирный заголовок
         for cell in next(worksheet.iter_rows(min_row=1, max_row=1)):
             cell.font = Font(bold=True)
 
@@ -670,8 +723,20 @@ def add_smart_table(writer, df, sheet_name, table_name):
             )
             worksheet.column_dimensions[get_column_letter(i)].width = max_length + 2
 
-    except Exception:
-        pass  # Для других движков просто пропустить
+        # Автофильтр на весь диапазон
+        worksheet.auto_filter.ref = worksheet.dimensions
+
+        # Freeze panes (закрепление областей) если freeze_map задан
+        if freeze_map:
+            # Приведение к верхнему регистру ключа для сравнения с map
+            key = sheet_name.split()[0].upper()
+            if key in freeze_map:
+                worksheet.freeze_panes = freeze_map[key]
+
+    except Exception as ex:
+        print(f"[add_smart_table] Ошибка форматирования листа '{sheet_name}': {ex}")
+        print(traceback.format_exc())
+
 
 def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns):
     """
@@ -700,12 +765,15 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
                     cell.font = Font(color="FFFFFF")
 
 def add_status_legend(writer, legend_data, sheet_name=STATUS_LEGEND_SHEET):
-    """Добавляет лист Excel с легендой по статусам (универсально)."""
+    """Добавляет лист Excel с легендой по статусам (универсально), включая группы."""
+    # Добавляем группы в легенду
+    for group, desc in GROUP_DESC_RU:
+        legend_data.append((f"{desc} ({group})", f"Группа статусов: {desc}", "#FFFFFF"))
+
     df_legend = pd.DataFrame(legend_data, columns=["Статус", "Описание", "Цвет"])
     df_legend.to_excel(writer, sheet_name=sheet_name, index=False)
 
     ws = writer.sheets[sheet_name]
-
     from openpyxl.styles import PatternFill, Font
     from openpyxl.utils import get_column_letter
 
@@ -725,6 +793,7 @@ def add_status_legend(writer, legend_data, sheet_name=STATUS_LEGEND_SHEET):
     for i, column_cells in enumerate(ws.columns, 1):
         max_len = max(len(str(cell.value)) if cell.value is not None else 0 for cell in column_cells)
         ws.column_dimensions[get_column_letter(i)].width = max_len + 2
+
 
 
 
@@ -890,36 +959,117 @@ def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name
         log.info(f"[{sheet_name}] [{emp_info}] Итоги по статусам: {stat_counts}")
     return df
 
+def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place=False):
+    """
+    Добавляет к DataFrame счетчики по статусам, top-3 (названия), и (для FINAL) — группы.
+    status_cols — колонки с турнирами.
+    all_statuses — список возможных статусов (по порядку важности для вывода).
+    is_final_place — если True, не считаем группы.
+    """
+    exclude = {"Not_used", "CONT"}
+    stat_names = [s for s in all_statuses if s not in exclude]
+    group_names = [g[0] for g in STATUS_GROUPS] if not is_final_place else []
+
+    stat_cols = [f"stat_{s}" for s in stat_names]
+    group_cols = [f"grp_{g}" for g in group_names]
+    new_columns = list(df.columns) + stat_cols + ['TOP1', 'TOP2', 'TOP3']
+    if not is_final_place:
+        new_columns += group_cols + ['GRP_MAX']
+
+    result_rows = []
+    for idx, row in df.iterrows():
+        stats = {s: 0 for s in stat_names}
+        vals = [row.get(c, None) for c in status_cols]
+        for v in vals:
+            if v in stats:
+                stats[v] += 1
+        # TOP-3 — как раньше
+        stat_items = sorted(stats.items(), key=lambda x: (-x[1], stat_names.index(x[0])))
+        used_names = set()
+        tops = []
+        items_left = stat_items.copy()
+        for _ in range(3):
+            if not items_left or items_left[0][1] <= 0:
+                tops.append('-')
+                continue
+            maxval = items_left[0][1]
+            names = [n for n, cnt in items_left if cnt == maxval]
+            tops.append(', '.join(names))
+            used_names.update(names)
+            items_left = [(n, cnt if n not in names else -1) for n, cnt in items_left]
+            items_left = sorted(items_left, key=lambda x: (-x[1], stat_names.index(x[0])))
+
+        # Подсчет по группам
+        group_counts = []
+        grp_max = "-"
+        if not is_final_place:
+            group_counts = []
+            max_val = 0
+            for gname, gstatuses in STATUS_GROUPS:
+                cnt = sum(stats.get(s, 0) for s in gstatuses)
+                group_counts.append(cnt)
+                if cnt > max_val:
+                    max_val = cnt
+            max_groups = [group_names[i] for i, val in enumerate(group_counts) if val == max_val and val > 0]
+            # --- Вот здесь описание группы вместо "Группа N"
+            grp_max = ', '.join([f"{GROUP_DESC_DICT[g]} ({g})" for g in max_groups]) if max_groups else "-"
+
+        new_row = list(row.values)
+        new_row += [stats[s] for s in stat_names]
+        new_row += tops
+        if not is_final_place:
+            new_row += group_counts
+            new_row += [grp_max]
+        result_rows.append(new_row)
+    log.info(f"[ADD_STATUSES] Добавлены итоговые колонки: {stat_cols + ['TOP1','TOP2','TOP3'] + (group_cols + ['GRP_MAX'] if not is_final_place else [])}")
+    return pd.DataFrame(result_rows, columns=new_columns), stat_names, group_cols
 
 def main():
     """Основная точка входа в программу."""
     logger = setup_logger(LOG_DIR, LOG_BASENAME)
 
     t_start = datetime.now()
-    before_path = os.path.join(SOURCE_DIR, BEFORE_FILENAME)
-    after_path = os.path.join(SOURCE_DIR, AFTER_FILENAME)
     now = datetime.now()
     ts = now.strftime("%Y%m%d_%H%M%S")
-    sheet_before = f"BEFORE"
-    sheet_after = f"AFTER"
-    sheet_compare = f"COMPARE"
-    sheet_final = f"FINAL"
-    sheet_final_place = f"FINAL_PLACE"
 
-    logger.info(f"[MAIN] Читаем BEFORE: {before_path}")
+    # --- Имена листов ---
+    sheet_before = "BEFORE"
+    sheet_after = "AFTER"
+    sheet_compare = "COMPARE"
+    sheet_final = "FINAL"
+    sheet_final_place = "FINAL_PLACE"
+    sheet_final_raw = "FINAL_RAW"
+    sheet_final_place_raw = "FINAL_PLACE_RAW"
+
+    # --- Карта закрепления (freeze panes) ---
+    freeze_map = {
+        "FINAL":        "D2",  # Первая строка + 3 столбца
+        "FINAL_PLACE":  "D2",
+        "COMPARE":      "E2",  # Первая строка + 4 столбца
+        "BEFORE":       "G2",  # Первая строка + 6 столбцов
+        "AFTER":        "G2",
+        "FINAL_RAW":    "D2",
+        "FINAL_PLACE_RAW": "D2"
+    }
+
+    # --- Загрузка данных ---
+    logger.info(f"[MAIN] Читаем BEFORE: {os.path.join(SOURCE_DIR, BEFORE_FILENAME)}")
     t_beg_before = datetime.now()
-    rows_before = process_json_file(before_path)
+    rows_before = process_json_file(os.path.join(SOURCE_DIR, BEFORE_FILENAME))
     df_before = pd.DataFrame(rows_before)
     t_end_before = datetime.now()
+    logger.info(f"[MAIN] Загружено {len(df_before)} строк из BEFORE.")
     log_data_stats(df_before, "BEFORE")
 
-    logger.info(f"[MAIN] Читаем AFTER: {after_path}")
+    logger.info(f"[MAIN] Читаем AFTER: {os.path.join(SOURCE_DIR, AFTER_FILENAME)}")
     t_beg_after = datetime.now()
-    rows_after = process_json_file(after_path)
+    rows_after = process_json_file(os.path.join(SOURCE_DIR, AFTER_FILENAME))
     df_after = pd.DataFrame(rows_after)
     t_end_after = datetime.now()
+    logger.info(f"[MAIN] Загружено {len(df_after)} строк из AFTER.")
     log_data_stats(df_after, "AFTER")
 
+    # --- Анализ турниров ---
     before_tids = set(df_before['tournamentId'].unique())
     after_tids = set(df_after['tournamentId'].unique())
     added_tids = after_tids - before_tids
@@ -931,70 +1081,90 @@ def main():
     logger.info(f"[MAIN] Удалённые турниры (только в BEFORE): {len(removed_tids)} -> {list(removed_tids)}")
     logger.info(f"[MAIN] Общие турниры: {len(common_tids)} -> {list(common_tids)}")
 
+    # --- Приведение колонок к общему виду ---
     all_cols = PRIORITY_COLS.copy()
     all_cols += [c for c in set(df_before.columns).union(df_after.columns) if c not in all_cols]
     df_before = df_before.reindex(columns=all_cols)
     df_after = df_after.reindex(columns=all_cols)
+    logger.info(f"[MAIN] Приведены колонки BEFORE и AFTER к единой структуре.")
 
-    logger.info(f"[MAIN] Формируем COMPARE")
+    # --- Формируем COMPARE ---
     t_beg_compare = datetime.now()
-    compare_df, sheet_compare = make_compare_sheet(
-        df_before, df_after, sheet_compare
-    )
+    compare_df, sheet_compare = make_compare_sheet(df_before, df_after, sheet_compare)
     t_end_compare = datetime.now()
+    logger.info(f"[MAIN] Построен COMPARE: {len(compare_df)} строк.")
+    log_compare_stats(compare_df)
 
-    # Построение финального листа (FINAL)
+    # --- Финальная таблица (FINAL) ---
     t_beg_final = datetime.now()
     final_df, tournaments = build_final_sheet_fast(
         compare_df, ALLOWED_TOURNAMENT_IDS, "FINAL_", CATEGORY_RANK_MAP, df_before, df_after, logger
     )
-
-    # Построение финального листа по place (FINAL_PLACE)
+    logger.info(f"[MAIN] Построен FINAL: {final_df.shape}")
+    # Финальная таблица по place (FINAL_PLACE)
     final_place_df, tournaments_place = build_final_place_sheet_from_compare(
         compare_df, ALLOWED_TOURNAMENT_IDS, df_before, df_after, logger, sheet_name=sheet_final_place
     )
+    logger.info(f"[MAIN] Построен FINAL_PLACE: {final_place_df.shape}")
     t_end_final = datetime.now()
 
-    # === ДОБАВЛЕНИЕ ИТОГОВЫХ КОЛОНОК ПО СТАТУСАМ ===
+    # --- Добавляем итоговые колонки по статусам ---
     final_df = add_status_summary_columns(final_df, tournaments, ALL_STATUSES_FINAL, logger, "FINAL")
+    logger.info(f"[MAIN] Добавлены сводные колонки по статусам в FINAL.")
     final_place_df = add_status_summary_columns(final_place_df, tournaments_place, ALL_STATUSES_PLACE, logger, "FINAL_PLACE", suffix="_PLACE")
+    logger.info(f"[MAIN] Добавлены сводные колонки по статусам в FINAL_PLACE.")
 
-    final_status_cols = tournaments
-    log_compare_stats(compare_df)
+    # --- Подсчет TOP-3 и групп (группы только для FINAL) ---
+    final_df_stat, final_status_names, final_group_cols = add_status_count_and_top3(
+        final_df, tournaments, FINAL_STATUS_LIST, logger, is_final_place=False
+    )
+    logger.info(f"[MAIN] Добавлены колонки TOP1/2/3 и групп в FINAL.")
+    final_place_df_stat, final_place_status_names, _ = add_status_count_and_top3(
+        final_place_df, tournaments_place, FINAL_PLACE_STATUS_LIST, logger, is_final_place=True
+    )
+    logger.info(f"[MAIN] Добавлены колонки TOP1/2/3 в FINAL_PLACE.")
 
+    # --- Экспорт в Excel ---
     base, ext = os.path.splitext(RESULT_EXCEL)
     result_excel_ts = f"{base}_{ts}{ext}"
     out_excel = os.path.join(TARGET_DIR, result_excel_ts)
 
     t_beg_export = datetime.now()
     with pd.ExcelWriter(out_excel, engine='openpyxl') as writer:
-        logger.info(f"[MAIN] Экспортируем BEFORE лист {sheet_before}")
-        add_smart_table(writer, df_before, sheet_before, "SMART_" + sheet_before)
-        logger.info(f"[MAIN] Экспортируем AFTER лист {sheet_after}")
-        add_smart_table(writer, df_after, sheet_after, "SMART_" + sheet_after)
-        logger.info(f"[MAIN] Экспортируем COMPARE лист {sheet_compare}")
-        add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare)
-        logger.info(f"[MAIN] Экспортируем FINAL лист {sheet_final}")
-        add_smart_table(writer, final_df, sheet_final, "SMART_" + sheet_final)
-        logger.info(f"[MAIN] Экспортируем FINAL_PLACE лист {sheet_final_place}")
-        add_smart_table(writer, final_place_df, sheet_final_place, "SMART_" + sheet_final_place)
+        # Контрольные листы (RAW, не обязательны, но полезны)
+        add_smart_table(writer, final_df, sheet_final_raw, "SMART_" + sheet_final_raw, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист FINAL_RAW ({final_df.shape[0]} строк).")
+        add_smart_table(writer, final_place_df, sheet_final_place_raw, "SMART_" + sheet_final_place_raw, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист FINAL_PLACE_RAW ({final_place_df.shape[0]} строк).")
+        # Основные листы
+        add_smart_table(writer, df_before, sheet_before, "SMART_" + sheet_before, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист BEFORE.")
+        add_smart_table(writer, df_after, sheet_after, "SMART_" + sheet_after, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист AFTER.")
+        add_smart_table(writer, compare_df, sheet_compare, "SMART_" + sheet_compare, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист COMPARE.")
+        add_smart_table(writer, final_df_stat, sheet_final, "SMART_" + sheet_final, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист FINAL (итоговый).")
+        add_smart_table(writer, final_place_df_stat, sheet_final_place, "SMART_" + sheet_final_place, freeze_map=freeze_map)
+        logger.info(f"[MAIN] Экспортирован лист FINAL_PLACE (итоговый).")
 
+        # Цветовая раскраска
         apply_status_colors(
             writer,
-            final_place_df,
-            sheet_final_place,
-            STATUS_COLORS_DICT,
-            tournaments_place)
-        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL_PLACE")
-        apply_status_colors(
-            writer,
-            final_df,
+            final_df_stat,
             sheet_final,
             STATUS_COLORS_DICT,
-            final_status_cols
+            tournaments + final_status_names + ['TOP1', 'TOP2', 'TOP3']
         )
-        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL")
-
+        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL.")
+        apply_status_colors(
+            writer,
+            final_place_df_stat,
+            sheet_final_place,
+            STATUS_COLORS_DICT,
+            tournaments_place + final_place_status_names + ['TOP1', 'TOP2', 'TOP3']
+        )
+        logger.info(f"[MAIN] Применена цветовая раскраска к FINAL_PLACE.")
         apply_status_colors(
             writer,
             compare_df,
@@ -1002,11 +1172,23 @@ def main():
             STATUS_COLORS_DICT,
             STATUS_COLOR_COLUMNS
         )
-        logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE")
+        logger.info(f"[MAIN] Применена цветовая раскраска к COMPARE.")
+
         add_status_legend(writer, STATUS_LEGEND_DATA, sheet_name=STATUS_LEGEND_SHEET)
-        logger.info(f"[MAIN] Все данные выгружены в файл: {out_excel}")
+        logger.info(f"[MAIN] Добавлен лист с легендой статусов.")
+
+        # Выбор листа FINAL как активного при открытии файла
+        try:
+            workbook = writer.book
+            if sheet_final in workbook.sheetnames:
+                workbook.active = workbook.sheetnames.index(sheet_final)
+        except Exception as ex:
+            logger.warning(f"[MAIN] Не удалось установить лист FINAL активным: {ex}")
+
+        logger.info(f"[MAIN] Все данные успешно выгружены в файл: {out_excel}")
     t_end_export = datetime.now()
 
+    # --- Сводка по времени ---
     summary = SUMMARY_TEMPLATE.format(
         tourn=len(tournaments),
         emps=len(final_df),
@@ -1019,7 +1201,6 @@ def main():
         tt=(t_end_export - t_start).total_seconds(),
     )
     logger.info(summary)
-
 
 
 if __name__ == "__main__":
