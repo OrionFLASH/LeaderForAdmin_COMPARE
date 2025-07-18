@@ -996,7 +996,7 @@ def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('st
         ws.conditional_formatting.add(
             col_range,
             CellIsRule(operator='equal', formula=['0'],
-                       stopIfTrue=False,
+                       stopIfTrue=True,
                        font=Font(color="E0E0E0"))
         )
         # 2. Цветовая шкала для >0
