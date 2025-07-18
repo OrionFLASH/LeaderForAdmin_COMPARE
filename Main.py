@@ -996,7 +996,8 @@ def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('st
         ws.conditional_formatting.add(
             col_range,
             CellIsRule(operator='equal', formula=['0'],
-                       fill=PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid"))
+                       stopIfTrue=False,
+                       font=Font(color="E0E0E0"))
         )
         # 2. Цветовая шкала для >0
         ws.conditional_formatting.add(
@@ -1008,26 +1009,26 @@ def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('st
             )
         )
         if log:
-            log.info(LOG_MESSAGES["COND_FMT_COL"].format(sheet=sheet_name, col=header))
+            log.debug(LOG_MESSAGES["COND_FMT_COL"].format(sheet=sheet_name, col=header))
     if log:
         log.info(LOG_MESSAGES["COND_FMT_FINISH"].format(sheet=sheet_name, prefixes=stat_prefixes))
 
 
-def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name="", suffix=""):
+def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name="", prefix=""):
     """
     Добавляет справа в датафрейм df колонки по всем статусам.
     Логирует для каждой строки результат.
     """
     log.info(LOG_MESSAGES["STATUSES_ADD_START"].format(sheet=sheet_name, statuses=all_statuses))
     for status in all_statuses:
-        colname = f"{status}{suffix}"
+        colname = f"{prefix}{status}"
         df[colname] = df[tournament_ids].apply(lambda row: sum((str(x) == status) for x in row), axis=1)
         total = df[colname].sum()
         log.info(LOG_MESSAGES["STATUSES_ADDED_COL"].format(sheet=sheet_name, status=status, total=total))
     # Лог по каждой строке (детализировано)
     for i, row in df.iterrows():
         emp_info = f"{row['employeeNumber']} {row['lastName']} {row['firstName']}"
-        stat_counts = {status: row[f"{status}{suffix}"] for status in all_statuses}
+        stat_counts = {status: row[f"{prefix}{status}"] for status in all_statuses}
         log.debug(LOG_MESSAGES["STATUSES_ROW_DETAIL"].format(sheet=sheet_name, emp_info=emp_info, stat_counts=stat_counts))
     return df
 
@@ -1198,9 +1199,9 @@ def main():
     t_end_final = datetime.now()
 
     # --- Добавляем итоговые колонки по статусам ---
-    final_df = add_status_summary_columns(final_df, tournaments, ALL_STATUSES_FINAL, logger, SHEET_NAMES['final'])
+    final_df = add_status_summary_columns(final_df, tournaments, ALL_STATUSES_FINAL, logger, SHEET_NAMES['final'], prefix="prize_")
     logger.info(LOG_MESSAGES["MAIN_FINAL_STATUS_SUMMARY"].format(sheet=SHEET_NAMES['final']))
-    final_place_df = add_status_summary_columns(final_place_df, tournaments_place, ALL_STATUSES_PLACE, logger, SHEET_NAMES['final_place'], suffix="_PLACE")
+    final_place_df = add_status_summary_columns(final_place_df, tournaments_place, ALL_STATUSES_PLACE, logger, SHEET_NAMES['final_place'], prefix="place_")
     logger.info(LOG_MESSAGES["MAIN_FINAL_PLACE_STATUS_SUMMARY"].format(sheet=SHEET_NAMES['final_place']))
 
     # --- Подсчет TOP-3 и групп (группы только для FINAL) ---
@@ -1236,9 +1237,9 @@ def main():
         log_final = export_and_log(writer, final_df_stat, SHEET_NAMES['final'], logger, freeze_map)
         log_final_place = export_and_log(writer, final_place_df_stat, SHEET_NAMES['final_place'], logger, freeze_map)
 
-        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final'], log=logger)
+        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final'], ('stat_', 'grp_', 'prize_'), log=logger)
         logger.info(LOG_MESSAGES["MAIN_STAT_COND_FMT"].format(sheet=SHEET_NAMES['final']))
-        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final_place'], log=logger)
+        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final_place'], ('stat_', 'grp_', "place_"), log=logger)
         logger.info(LOG_MESSAGES["MAIN_STAT_COND_FMT"].format(sheet=SHEET_NAMES['final_place']))
 
         # Цветовая раскраска
@@ -1298,7 +1299,6 @@ def main():
         final_groups=final_groups_dist,
     )
     logger.info(summary)
-
 
 if __name__ == "__main__":
     main()
