@@ -1161,7 +1161,7 @@ def main():
         logger.info(f"[MAIN] Экспортирован лист FINAL (итоговый).")
         add_smart_table(writer, final_place_df_stat, sheet_final_place, "SMART_" + sheet_final_place, freeze_map=freeze_map)
         logger.info(f"[MAIN] Экспортирован лист FINAL_PLACE (итоговый).")
-        pply_stat_grp_conditional_formatting(writer, sheet_final)
+        apply_stat_grp_conditional_formatting(writer, sheet_final)
         logger.info(f"[MAIN] Применено условное форматирование к stat_/grp_ в листе {sheet_final}.")
         apply_stat_grp_conditional_formatting(writer, sheet_final_place)
         logger.info(f"[MAIN] Применено условное форматирование к stat_/grp_ в листе {sheet_final_place}.")
