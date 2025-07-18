@@ -21,7 +21,7 @@ LOG_LEVEL = logging.INFO
 SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JSON"
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
-LOG_BASENAME = "LOG4"
+LOG_BASENAME = "LOG5"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
 AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
@@ -192,7 +192,7 @@ FLOAT_FIELDS = [
 FINAL_STATUS_LIST = [
     "Новый призёр", "Поднялся в рейтинге призеров", "Стал призёром", "Сохранил призовую позицию",
     "Снизил призовое место", "Лишился награды", "Удалённый призёр", "Без изменений",
-    "Новый участник без награды", "Удалённый участник без награды", "Не участвовал"
+    "Новый участник без награды", "Удалённый участник без награды"
 ]
 
 # Для FINAL_PLACE нужны только PLACE-статусы:
@@ -214,7 +214,6 @@ STATUS_GROUPS = [
     ("Группа 7", ["Удалённый участник без награды"]),
     ("Группа 8", ["Не участвовал"]),
 ]
-
 
 # --- Все цвета статусов здесь ---
 STATUS_COLORS_DICT = {
@@ -258,24 +257,6 @@ STATUS_COLORS_DICT = {
     'Rang GOSB NO CHANGE':          {"fill": "#BFBFBF", "font": "#000000"},
 }
 
-
-# --- Статусы для листа FINAL (категории) ---
-ALL_STATUSES_FINAL = [
-    "Новый призёр",
-    "Поднялся в рейтинге призеров",
-    "Сохранил призовую позицию",
-    "Стал призёром",
-    "Снизил призовое место",
-    "Лишился награды",
-    "Удалённый призёр",
-    "Новый участник без награды",
-    "Без изменений",
-    "Удалённый участник без награды",
-    "CONTESTANT",
-    "Not_used",
-    "Не участвовал",
-]
-
 # --- Статусы для листа FINAL_PLACE (placeInRating) ---
 ALL_STATUSES_PLACE = [
     "Rang BANK UP", "Rang TB UP", "Rang GOSB UP",
@@ -287,8 +268,6 @@ ALL_STATUSES_PLACE = [
     "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
     "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
 ]
-
-
 
 # Какие колонки раскрашивать (для передачи в apply_status_colors)
 STATUS_COLOR_COLUMNS = [
@@ -317,17 +296,16 @@ STATUS_LEGEND_DATA = [
 ]
 
 # --- Группы для FINAL и их описания для легенды и GRP_MAX ---
-GROUP_DESC_RU = [
-    ("Группа 1", "Поднялся в рейтинге призеров, Новый призёр"),
-    ("Группа 2", "Стал призёром"),
-    ("Группа 3", "Сохранил призовую позицию"),
-    ("Группа 4", "Снизил призовое место"),
-    ("Группа 5", "Лишился награды, Удалённый призёр"),
-    ("Группа 6", "Без изменений, Новый участник без награды"),
-    ("Группа 7", "Удалённый участник без награды"),
-    ("Группа 8", "Не участвовал"),
-]
-GROUP_DESC_DICT = dict(GROUP_DESC_RU)
+GROUP_DESC_DICT = {
+    "Группа 1": "Поднялся в рейтинге призеров, Новый призёр",
+    "Группа 2": "Стал призёром",
+    "Группа 3": "Сохранил призовую позицию",
+    "Группа 4": "Снизил призовое место",
+    "Группа 5": "Лишился награды, Удалённый призёр",
+    "Группа 6": "Без изменений, Новый участник без награды",
+    "Группа 7": "Удалённый участник без награды",
+    "Группа 8": "Не участвовал",
+}
 
 # --- Названия листов для экспорта ---
 SHEET_NAMES = {
@@ -341,44 +319,45 @@ SHEET_NAMES = {
     "status_legend": "STATUS_LEGEND",
 }
 
-
-# Статусы для сравнения (логика и сокращения)
-STATUS_NEW_REMOVE = {
-    "both":        "No Change",
-    "before_only": "Remove",
-    "after_only":  "New"
-}
+# --- Статусы сравнения для показателя indicatorValue ---
 STATUS_INDICATOR = {
-    "val_add":      "New ADD",
-    "val_remove":   "Remove FROM",
-    "val_nochange": "No Change",
-    "val_down":     "Change DOWN",
-    "val_up":       "Change UP"
+    "val_add":      "New ADD",      # Значение появилось (было None/отсутствовало, стало не None)
+    "val_remove":   "Remove FROM",  # Значение исчезло (было не None, стало None)
+    "val_nochange": "No Change",    # Значение не изменилось (равно до и после)
+    "val_down":     "Change DOWN",  # Значение уменьшилось (стало ниже)
+    "val_up":       "Change UP"     # Значение увеличилось (стало выше)
 }
+
+# --- Статусы сравнения для места (placeInRating) BANK ---
 STATUS_BANK_PLACE = {
-    "val_add":      "Rang BANK NEW",
-    "val_remove":   "Rang BANK REMOVE",
-    "val_nochange": "Rang BANK NO CHANGE",
-    "val_up":       "Rang BANK UP",
-    "val_down":     "Rang BANK DOWN",
-    "val_norank":   "NO_RANK"  # добавлено!
+    "val_add":      "Rang BANK NEW",      # Место появилось (раньше не было, теперь есть)
+    "val_remove":   "Rang BANK REMOVE",   # Место исчезло (было, теперь нет)
+    "val_nochange": "Rang BANK NO CHANGE",# Место не изменилось
+    "val_up":       "Rang BANK UP",       # Место улучшилось (меньше номер — выше место, например: с 5 на 2)
+    "val_down":     "Rang BANK DOWN",     # Место ухудшилось (больше номер — ниже место, например: с 2 на 5)
+    "val_norank":   "NO_RANK"             # Место отсутствовало и до, и после (None/NaN)
 }
+
+# --- Статусы сравнения для места (placeInRating) TB ---
 STATUS_TB_PLACE = {
-    "val_add":      "Rang TB NEW",
-    "val_remove":   "Rang TB REMOVE",
-    "val_nochange": "Rang TB NO CHANGE",
-    "val_up":       "Rang TB UP",
-    "val_down":     "Rang TB DOWN",
-    "val_norank":   "NO_RANK"  # добавлено!
+    "val_add":      "Rang TB NEW",        # Место появилось (раньше не было, теперь есть)
+    "val_remove":   "Rang TB REMOVE",     # Место исчезло (было, теперь нет)
+    "val_nochange": "Rang TB NO CHANGE",  # Место не изменилось
+    "val_up":       "Rang TB UP",         # Место улучшилось (меньше номер)
+    "val_down":     "Rang TB DOWN",       # Место ухудшилось (больше номер)
+    "val_norank":   "NO_RANK"             # Место отсутствовало и до, и после (None/NaN)
 }
+
+# --- Статусы сравнения для места (placeInRating) GOSB ---
 STATUS_GOSB_PLACE = {
-    "val_add":      "Rang GOSB NEW",
-    "val_remove":   "Rang GOSB REMOVE",
-    "val_nochange": "Rang GOSB NO CHANGE",
-    "val_up":       "Rang GOSB UP",
-    "val_down":     "Rang GOSB DOWN",
-    "val_norank":   "NO_RANK"  # добавлено!
+    "val_add":      "Rang GOSB NEW",      # Место появилось (раньше не было, теперь есть)
+    "val_remove":   "Rang GOSB REMOVE",   # Место исчезло (было, теперь нет)
+    "val_nochange": "Rang GOSB NO CHANGE",# Место не изменилось
+    "val_up":       "Rang GOSB UP",       # Место улучшилось (меньше номер)
+    "val_down":     "Rang GOSB DOWN",     # Место ухудшилось (больше номер)
+    "val_norank":   "NO_RANK"             # Место отсутствовало и до, и после (None/NaN)
 }
+
 CATEGORY_RANK_MAP = {
     "Вы в лидерах": 1,
     "Серебро": 2,
@@ -387,17 +366,6 @@ CATEGORY_RANK_MAP = {
     "": 4,
     None: 4
 }
-
-STATUS_RATING_CATEGORY = {
-    "in2prize": "ENTERED_PRIZE",
-    "stay_out": "STAYED_OUT",
-    "from2out": "DROPPED_OUT_PRIZE",
-    "lost":     "LOST_VIEW",
-    "same":     "PRIZE_UNCHANGED",
-    "up":       "PRIZE_UP",
-    "down":     "PRIZE_DOWN",
-}
-
 
 category_compare_lookup = {
     (0, None, 0, None): {'desc_ru': 'Не участвовал', 'tag': 'NoShow'},
@@ -804,8 +772,8 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
     logging.info(LOG_MESSAGES["STATUS_COLOR_DONE"].format(sheet=sheet_name))
 
 def add_status_legend(writer, legend_data, sheet_name=SHEET_NAMES['status_legend']):
-    # Добавляем группы в легенду
-    for group, desc in GROUP_DESC_RU:
+    # Добавляем группы в легенду (теперь через словарь)
+    for group, desc in GROUP_DESC_DICT.items():
         legend_data.append((f"{desc} ({group})", f"Группа статусов: {desc}", "#FFFFFF"))
 
     df_legend = pd.DataFrame(legend_data, columns=["Статус", "Описание", "Цвет"])
@@ -1013,30 +981,11 @@ def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('st
     if log:
         log.info(LOG_MESSAGES["COND_FMT_FINISH"].format(sheet=sheet_name, prefixes=stat_prefixes))
 
-
-def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name="", prefix=""):
-    """
-    Добавляет справа в датафрейм df колонки по всем статусам.
-    Логирует для каждой строки результат.
-    """
-    log.info(LOG_MESSAGES["STATUSES_ADD_START"].format(sheet=sheet_name, statuses=all_statuses))
-    for status in all_statuses:
-        colname = f"{prefix}{status}"
-        df[colname] = df[tournament_ids].apply(lambda row: sum((str(x) == status) for x in row), axis=1)
-        total = df[colname].sum()
-        log.info(LOG_MESSAGES["STATUSES_ADDED_COL"].format(sheet=sheet_name, status=status, total=total))
-    # Лог по каждой строке (детализировано)
-    for i, row in df.iterrows():
-        emp_info = f"{row['employeeNumber']} {row['lastName']} {row['firstName']}"
-        stat_counts = {status: row[f"{prefix}{status}"] for status in all_statuses}
-        log.debug(LOG_MESSAGES["STATUSES_ROW_DETAIL"].format(sheet=sheet_name, emp_info=emp_info, stat_counts=stat_counts))
-    return df
-
 def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place=False):
     """
     Добавляет к DataFrame счетчики по статусам, top-3 (названия), и (для FINAL) — группы.
     """
-    exclude = {"Not_used", "CONTESTANT"}
+    exclude = {"Not_used", "CONTESTANT", "Без изменений"}
     stat_names = [s for s in all_statuses if s not in exclude]
     group_names = [g[0] for g in STATUS_GROUPS] if not is_final_place else []
 
@@ -1198,12 +1147,6 @@ def main():
         sheet=SHEET_NAMES['final_place'], shape=final_place_df.shape))
     t_end_final = datetime.now()
 
-    # --- Добавляем итоговые колонки по статусам ---
-    final_df = add_status_summary_columns(final_df, tournaments, ALL_STATUSES_FINAL, logger, SHEET_NAMES['final'], prefix="prize_")
-    logger.info(LOG_MESSAGES["MAIN_FINAL_STATUS_SUMMARY"].format(sheet=SHEET_NAMES['final']))
-    final_place_df = add_status_summary_columns(final_place_df, tournaments_place, ALL_STATUSES_PLACE, logger, SHEET_NAMES['final_place'], prefix="place_")
-    logger.info(LOG_MESSAGES["MAIN_FINAL_PLACE_STATUS_SUMMARY"].format(sheet=SHEET_NAMES['final_place']))
-
     # --- Подсчет TOP-3 и групп (группы только для FINAL) ---
     final_df_stat, final_status_names, final_group_cols = add_status_count_and_top3(
         final_df, tournaments, FINAL_STATUS_LIST, logger, is_final_place=False
@@ -1237,9 +1180,9 @@ def main():
         log_final = export_and_log(writer, final_df_stat, SHEET_NAMES['final'], logger, freeze_map)
         log_final_place = export_and_log(writer, final_place_df_stat, SHEET_NAMES['final_place'], logger, freeze_map)
 
-        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final'], ('stat_', 'grp_', 'prize_'), log=logger)
+        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final'], ('stat_', 'grp_'), log=logger)
         logger.info(LOG_MESSAGES["MAIN_STAT_COND_FMT"].format(sheet=SHEET_NAMES['final']))
-        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final_place'], ('stat_', 'grp_', "place_"), log=logger)
+        apply_stat_grp_conditional_formatting(writer, SHEET_NAMES['final_place'], ('stat_', 'grp_'), log=logger)
         logger.info(LOG_MESSAGES["MAIN_STAT_COND_FMT"].format(sheet=SHEET_NAMES['final_place']))
 
         # Цветовая раскраска
