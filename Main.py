@@ -413,7 +413,7 @@ def log_data_stats(df, label):
     logging.info(f"[{label}] tournamentId всего: {len(unique_tids)} -> {unique_tids}")
     for tid in unique_tids:
         count = tournament_counts.get(tid, 0)
-        logging.info(f"[{label}] tournamentId={tid}: людей={count}")
+        logging.debug(f"[{label}] tournamentId={tid}: людей={count}")
     logging.info(f"[{label}] Все поля: {list(df.columns)}")
 
 def log_compare_stats(compare_df):
@@ -876,9 +876,9 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     log.info(f"[FINAL] Итоговая таблица построена: {final_df.shape[0]} x {final_df.shape[1]}")
     # Подробное логирование по каждому турниру
     for t_id in tournaments:
-        log.info(f"[{sheet_name}] tournamentId={t_id} - распределение статусов:")
+        log.debug(f"[{sheet_name}] tournamentId={t_id} - распределение статусов:")
         for status, count in status_counter[t_id].items():
-            log.info(f"[{sheet_name}]     {status}: {count}")
+            log.debug(f"[{sheet_name}]     {status}: {count}")
     return final_df, tournaments
 
 def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_after, log, sheet_name="FINAL_PLACE"):
@@ -947,9 +947,9 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
 
     # Подробное логирование по каждому турниру
     for t_id in tournaments:
-        log.info(f"[{sheet_name}] tournamentId={t_id} - распределение статусов:")
+        log.debug(f"[{sheet_name}] tournamentId={t_id} - распределение статусов:")
         for status, count in status_counter[t_id].items():
-            log.info(f"[{sheet_name}]     {status}: {count}")
+            log.debug(f"[{sheet_name}]     {status}: {count}")
     return final_place_df, tournaments
 
 
@@ -994,7 +994,7 @@ def add_status_summary_columns(df, tournament_ids, all_statuses, log, sheet_name
     for i, row in df.iterrows():
         emp_info = f"{row['employeeNumber']} {row['lastName']} {row['firstName']}"
         stat_counts = {status: row[f"{status}{suffix}"] for status in all_statuses}
-        log.info(f"[{sheet_name}] [{emp_info}] Итоги по статусам: {stat_counts}")
+        log.debug(f"[{sheet_name}] [{emp_info}] Итоги по статусам: {stat_counts}")
     return df
 
 def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place=False):
