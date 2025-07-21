@@ -22,21 +22,21 @@ SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JS
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 LOG_BASENAME = "LOG_INFO"
-BEFORE_FILENAME = "leadersForAdmin_ALL_20250708-140508.json"
-AFTER_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
+BEFORE_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
+AFTER_FILENAME = "leadersForAdmin_ALL_20250721-210823.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
 
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-#        "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
-#        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001",
-#        "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061", "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021",
-#        "t_01_2025-1_05-1_1_3061", "t_01_2025-1_01-7_1_4001", "t_01_2025-1_07-5_6_4001",
-#        "t_01_2025-1_07-5_7_4001", "t_01_2025-0_10-3_1_1001", "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001",
-#        "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
-#        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-0_13-1_4_1001",
-#        "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
+        "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
+        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001",
+        "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061", "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021",
+        "t_01_2025-1_05-1_1_3061", "t_01_2025-1_01-7_1_4001", "t_01_2025-1_07-5_6_4001",
+        "t_01_2025-1_07-5_7_4001", "t_01_2025-0_10-3_1_1001", "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001",
+        "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
+        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-0_13-1_4_1001",
+        "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
     # Если оставить пустым, то анализируются все турниры.
 ]
 
@@ -123,10 +123,10 @@ SUMMARY_TEMPLATE_EXT = (
 # --- Статусы, при которых считаем, что изменений не произошло ---
 # Если встречается один из этих кодов, строка считается без изменений
 NOCHANGE_STATUSES = [
-    "", "No Change", "STAYED_OUT", "PRIZE_UNCHANGED", "Remove", "Remove FROM",
+    "", "Тот же индикатор", "Остался вне призеров", "Сохранил призовую позицию", "Remove", "Индикатор пропал",
     "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
     "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
-    "Rang NO CHANGE", "NO_RANK",
+    "Rang NO CHANGE", "Не участвовал",
 ]
 
 # --- Основные колонки в исходных данных ---
@@ -191,7 +191,7 @@ FLOAT_FIELDS = [
 # Все возможные статусы для итоговых колонок (FINAL)
 FINAL_STATUS_LIST = [
     "Новый призёр", "Поднялся в рейтинге призеров", "Стал призёром", "Сохранил призовую позицию",
-    "Снизил призовое место", "Лишился награды", "Удалённый призёр", "Без изменений",
+    "Снизил призовое место", "Лишился награды", "Удалённый призёр", "Остался вне призеров",
     "Новый участник без награды", "Удалённый участник без награды"
 ]
 
@@ -209,7 +209,7 @@ STATUS_GROUPS = [
     ("Группа 2", ["Сохранил призовую позицию"]),
     ("Группа 3", ["Снизил призовое место"]),
     ("Группа 4", ["Лишился награды", "Удалённый призёр"]),
-    ("Группа 5", ["Без изменений", "Новый участник без награды", "Удалённый участник без награды"]),
+    ("Группа 5", ["Остался вне призеров", "Новый участник без награды", "Удалённый участник без награды"]),
     ("Группа 6", ["Не участвовал"]),
 ]
 
@@ -222,20 +222,19 @@ STATUS_COLORS_DICT = {
     "Сохранил призовую позицию":    {"fill": "#D9EAD3", "font": "#000000"},  # Светло-зелёный оттенок
     "Лишился награды":              {"fill": "#FF0000", "font": "#FFFFFF"},  # Красный, белый текст
     "Стал призёром":                {"fill": "#00B0F0", "font": "#000000"},  # Ярко-синий
-    "Без изменений":                {"fill": "#BFBFBF", "font": "#000000"},  # Серый
+    "Остался вне призеров":                {"fill": "#BFBFBF", "font": "#000000"},  # Серый
     "Удалённый участник без награды": {"fill": "#808080", "font": "#FFFFFF"},# Тёмно-серый, белый текст
     "Удалённый призёр":             {"fill": "#808080", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
     "Новый участник без награды":   {"fill": "#E2EFDA", "font": "#000000"},  # Бледно-зелёный
-    "Не участвовал":                {"fill": "#EDEDED", "font": "#000000"},  # Светло-серый
 
     # ==== Прочие статусы ====
     "Change DOWN":                  {"fill": "#FFC7CE", "font": "#000000"},
     "Change UP":                    {"fill": "#C6EFCE", "font": "#000000"},
-    "New ADD":                      {"fill": "#E2EFDA", "font": "#000000"},
-    "Remove FROM":                  {"fill": "#383838", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
-    "NO_RANK":                      {"fill": "#EDEDED", "font": "#000000"},
-    "CONTESTANT":                   {"fill": "#C9DAF8", "font": "#000000"},
-    "Not_used":                     {"fill": "#F5F5F5", "font": "#C8C8C8"},  # Почти белый, бледно-серый текст
+    "Новый индикатор":              {"fill": "#E2EFDA", "font": "#000000"},
+    "Индикатор пропал":             {"fill": "#383838", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
+    "Нет места":                    {"fill": "#EDEDED", "font": "#000000"},
+    "Участник":                     {"fill": "#C9DAF8", "font": "#000000"},
+    "Не участвовал":                {"fill": "#F5F5F5", "font": "#C8C8C8"},  # Почти белый, бледно-серый текст
 
     # ==== Статусы по PLACE рейтингу ====
     'Rang BANK UP':                 {"fill": "#C6EFCE", "font": "#000000"},
@@ -260,9 +259,9 @@ ALL_STATUSES_PLACE = [
     "Rang BANK UP", "Rang TB UP", "Rang GOSB UP",
     "Rang BANK NEW", "Rang TB NEW", "Rang GOSB NEW",
     "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
-    "NO_RANK",
-    "CONTESTANT",
-    "Not_used",
+    "Нет места",
+    "Участник",
+    "Не участвовал",
     "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
     "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
 ]
@@ -289,7 +288,7 @@ STATUS_LEGEND_DATA = [
     ("Сохранил призовую позицию", "Остался на том же призовом месте", "#D9EAD3"),
     ("Лишился награды", "Был призёром, стал без награды", "#FF0000"),
     ("Стал призёром", "Был без награды, попал в призёры", "#00B0F0"),
-    ("Без изменений", "Был вне призёров и остался вне", "#BFBFBF"),
+    ("Остался вне призеров", "Был вне призёров и остался вне", "#BFBFBF"),
     ("Удалённый участник без награды", "Был в прошлом, исчез из списка, не был призёром", "#808080"),
     ("Удалённый призёр", "Был призёром, но исчез из списка", "#808080"),
     ("Новый участник без награды", "Появился впервые, но не стал призёром", "#E2EFDA"),
@@ -302,7 +301,7 @@ GROUP_DESC_DICT = {
     "Группа 2": "Сохранил призовую позицию",
     "Группа 3": "Снизил призовое место",
     "Группа 4": "Лишился награды, Удалённый призёр",
-    "Группа 5": "Без изменений, Новый участник без награды, Удалённый участник без награды",
+    "Группа 5": "Остался вне призеров, Новый участник без награды, Удалённый участник без награды",
     "Группа 6": "Не участвовал",
 }
 
@@ -320,9 +319,9 @@ SHEET_NAMES = {
 
 # --- Статусы сравнения для показателя indicatorValue ---
 STATUS_INDICATOR = {
-    "val_add":      "New ADD",      # Значение появилось (было None/отсутствовало, стало не None)
-    "val_remove":   "Remove FROM",  # Значение исчезло (было не None, стало None)
-    "val_nochange": "No Change",    # Значение не изменилось (равно до и после)
+    "val_add":      "Новый индикатор",      # Значение появилось (было None/отсутствовало, стало не None)
+    "val_remove":   "Индикатор пропал",  # Значение исчезло (было не None, стало None)
+    "val_nochange": "Тот же индикатор",    # Значение не изменилось (равно до и после)
     "val_down":     "Change DOWN",  # Значение уменьшилось (стало ниже)
     "val_up":       "Change UP"     # Значение увеличилось (стало выше)
 }
@@ -334,7 +333,7 @@ STATUS_BANK_PLACE = {
     "val_nochange": "Rang BANK NO CHANGE",# Место не изменилось
     "val_up":       "Rang BANK UP",       # Место улучшилось (меньше номер — выше место, например: с 5 на 2)
     "val_down":     "Rang BANK DOWN",     # Место ухудшилось (больше номер — ниже место, например: с 2 на 5)
-    "val_norank":   "NO_RANK"             # Место отсутствовало и до, и после (None/NaN)
+    "val_norank":   "Нет места"             # Место отсутствовало и до, и после (None/NaN)
 }
 
 # --- Статусы сравнения для места (placeInRating) TB ---
@@ -344,7 +343,7 @@ STATUS_TB_PLACE = {
     "val_nochange": "Rang TB NO CHANGE",  # Место не изменилось
     "val_up":       "Rang TB UP",         # Место улучшилось (меньше номер)
     "val_down":     "Rang TB DOWN",       # Место ухудшилось (больше номер)
-    "val_norank":   "NO_RANK"             # Место отсутствовало и до, и после (None/NaN)
+    "val_norank":   "Нет места"             # Место отсутствовало и до, и после (None/NaN)
 }
 
 # --- Статусы сравнения для места (placeInRating) GOSB ---
@@ -354,7 +353,7 @@ STATUS_GOSB_PLACE = {
     "val_nochange": "Rang GOSB NO CHANGE",# Место не изменилось
     "val_up":       "Rang GOSB UP",       # Место улучшилось (меньше номер)
     "val_down":     "Rang GOSB DOWN",     # Место ухудшилось (больше номер)
-    "val_norank":   "NO_RANK"             # Место отсутствовало и до, и после (None/NaN)
+    "val_norank":   "Нет места"             # Место отсутствовало и до, и после (None/NaN)
 }
 
 CATEGORY_RANK_MAP = {
@@ -376,7 +375,7 @@ category_compare_lookup = {
     (1, 3, 0, None): {'desc_ru': 'Удалённый призёр', 'tag': 'RemovedWin'},
     (1, 2, 0, None): {'desc_ru': 'Удалённый призёр', 'tag': 'RemovedWin'},
     (1, 1, 0, None): {'desc_ru': 'Удалённый призёр', 'tag': 'RemovedWin'},
-    (1, 4, 1, 4): {'desc_ru': 'Без изменений', 'tag': 'NoChange'},
+    (1, 4, 1, 4): {'desc_ru': 'Остался вне призеров', 'tag': 'NoChange'},
     (1, 4, 1, 3): {'desc_ru': 'Стал призёром', 'tag': 'Upgrade'},
     (1, 4, 1, 2): {'desc_ru': 'Стал призёром', 'tag': 'Upgrade'},
     (1, 4, 1, 1): {'desc_ru': 'Стал призёром', 'tag': 'Upgrade'},
@@ -644,7 +643,7 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         if not pd.isnull(before) and pd.isnull(after):
             return status_dict['val_remove']
         if pd.isnull(before) and pd.isnull(after):
-            return status_dict.get('val_norank', 'NO_RANK')
+            return status_dict.get('val_norank', 'Нет места')
         if before == after:
             return status_dict['val_nochange']
         elif before > after:
@@ -843,9 +842,9 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
             if best_val is not None:
                 final_value = best_val
             elif was_in_before or was_in_after:
-                final_value = "CONTESTANT"
+                final_value = "Участник"
             else:
-                final_value = "Not_used"
+                final_value = "Не участвовал"
 
             status_counter[t_id][final_value] = status_counter[t_id].get(final_value, 0) + 1
 
@@ -864,7 +863,7 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
 
 def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_after, log, sheet_name="FINAL_PLACE"):
     """
-    Строит сводную таблицу по статусам placeInRating_Compare (BANK > TB > GOSB > Not_Used).
+    Строит сводную таблицу по статусам placeInRating_Compare (BANK > TB > GOSB > Не участвовал).
     Подсчёт статусов идёт только по одному выбранному для турнира уровню, без дублей.
     """
     log.info(LOG_MESSAGES["PLACE_BUILD_START"].format(sheet=sheet_name))
@@ -882,11 +881,11 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     tournament_level = {}
     for t_id in tournaments:
         has_bank = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_BANK_placeInRating_Compare'] \
-            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']).any()
+            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']).any()
         has_tb = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_TB_placeInRating_Compare'] \
-            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']).any()
+            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']).any()
         has_gosb = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_GOSB_placeInRating_Compare'] \
-            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']).any()
+            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']).any()
         if has_bank:
             tournament_level[t_id] = 'BANK'
         elif has_tb:
@@ -917,7 +916,7 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
                 rec = indexed.loc[idx]
                 colname = f'divisionRatings_{level}_placeInRating_Compare'
                 v = rec.get(colname, None)
-                if pd.notnull(v) and str(v).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']:
+                if pd.notnull(v) and str(v).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']:
                     value = v
 
             was_in_before = (emp['employeeNumber'], t_id) in before_pairs
@@ -926,9 +925,9 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
             if value is not None:
                 final_value = value
             elif was_in_before or was_in_after:
-                final_value = "CONTESTANT"
+                final_value = "Участник"
             else:
-                final_value = "Not_used"
+                final_value = "Не участвовал"
 
             row[t_id] = final_value
             # 3. Подсчёт только по выбранному уровню
@@ -987,7 +986,7 @@ def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place
     """
     Добавляет к DataFrame счетчики по статусам, top-3 (названия), и (для FINAL) — группы.
     """
-    exclude = {"Not_used", "CONTESTANT", "Без изменений"}
+    exclude = {"Не участвовал", "Участник", "Остался вне призеров"}
     stat_names = [s for s in all_statuses if s not in exclude]
     group_names = [g[0] for g in STATUS_GROUPS] if not is_final_place else []
 
