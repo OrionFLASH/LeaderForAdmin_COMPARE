@@ -29,14 +29,14 @@ RESULT_EXCEL = "LFA_COMPARE.xlsx"
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-        "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
-        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001",
-        "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061", "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021",
-        "t_01_2025-1_05-1_1_3061", "t_01_2025-1_01-7_1_4001", "t_01_2025-1_07-5_6_4001",
-        "t_01_2025-1_07-5_7_4001", "t_01_2025-0_10-3_1_1001", "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001",
-        "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
-        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-0_13-1_4_1001",
-        "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
+#        "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
+#        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001",
+#        "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061", "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021",
+#        "t_01_2025-1_05-1_1_3061", "t_01_2025-1_01-7_1_4001", "t_01_2025-1_07-5_6_4001",
+#        "t_01_2025-1_07-5_7_4001", "t_01_2025-0_10-3_1_1001", "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001",
+#        "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
+#        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-0_13-1_4_1001",
+#        "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
     # Если оставить пустым, то анализируются все турниры.
 ]
 
@@ -865,7 +865,7 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
 def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_after, log, sheet_name="FINAL_PLACE"):
     """
     Строит сводную таблицу по статусам placeInRating_Compare (BANK > TB > GOSB > Not_Used).
-    Подробное логирование.
+    Подсчёт статусов идёт только по одному выбранному для турнира уровню, без дублей.
     """
     log.info(LOG_MESSAGES["PLACE_BUILD_START"].format(sheet=sheet_name))
     if allowed_ids:
@@ -878,6 +878,24 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     log.info(LOG_MESSAGES["PLACE_UNIQUE_EMPLOYEES"].format(sheet=sheet_name, num_employees=len(employees)))
     log.info(LOG_MESSAGES["PLACE_TOURNAMENTS"].format(sheet=sheet_name, num_tournaments=len(tournaments)))
 
+    # 1. Для каждого турнира определить приоритетный уровень (BANK, TB, GOSB)
+    tournament_level = {}
+    for t_id in tournaments:
+        has_bank = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_BANK_placeInRating_Compare'] \
+            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']).any()
+        has_tb = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_TB_placeInRating_Compare'] \
+            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']).any()
+        has_gosb = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_GOSB_placeInRating_Compare'] \
+            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']).any()
+        if has_bank:
+            tournament_level[t_id] = 'BANK'
+        elif has_tb:
+            tournament_level[t_id] = 'TB'
+        elif has_gosb:
+            tournament_level[t_id] = 'GOSB'
+        else:
+            tournament_level[t_id] = None
+
     # Быстрые индексы
     indexed = compare_df.set_index(['employeeNumber', 'lastName', 'firstName', 'tournamentId'])
     before_pairs = set(zip(df_before['employeeNumber'], df_before['tournamentId']))
@@ -886,6 +904,7 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     result_rows = []
     status_counter = {t_id: {} for t_id in tournaments}
 
+    # 2. Строим по выбранному уровню
     for _, emp in employees.iterrows():
         emp_key = (emp['employeeNumber'], emp['lastName'], emp['firstName'])
         row = {col: emp[col] for col in emp_cols}
@@ -893,16 +912,13 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
         for t_id in tournaments:
             idx = emp_key + (t_id,)
             value = None
-
-            if idx in indexed.index:
+            level = tournament_level[t_id]
+            if idx in indexed.index and level is not None:
                 rec = indexed.loc[idx]
-                val_bank = rec.get('divisionRatings_BANK_placeInRating_Compare', None)
-                val_tb   = rec.get('divisionRatings_TB_placeInRating_Compare', None)
-                val_gosb = rec.get('divisionRatings_GOSB_placeInRating_Compare', None)
-                for v in [val_bank, val_tb, val_gosb]:
-                    if pd.notnull(v) and str(v).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']:
-                        value = v
-                        break
+                colname = f'divisionRatings_{level}_placeInRating_Compare'
+                v = rec.get(colname, None)
+                if pd.notnull(v) and str(v).strip().upper() not in ['NONE', 'NULL', '', 'NO_RANK']:
+                    value = v
 
             was_in_before = (emp['employeeNumber'], t_id) in before_pairs
             was_in_after = (emp['employeeNumber'], t_id) in after_pairs
@@ -914,19 +930,22 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
             else:
                 final_value = "Not_used"
 
+            row[t_id] = final_value
+            # 3. Подсчёт только по выбранному уровню
             status_counter[t_id][final_value] = status_counter[t_id].get(final_value, 0) + 1
 
-            row[t_id] = final_value
         result_rows.append(row)
 
     final_place_df = pd.DataFrame(result_rows)
     log.info(LOG_MESSAGES["PLACE_TABLE_DONE"].format(sheet=sheet_name, shape=f"{final_place_df.shape[0]} x {final_place_df.shape[1]}"))
 
-    # Подробное логирование по каждому турниру
+    # Логирование по турнирам
     for t_id in tournaments:
         log.debug(LOG_MESSAGES["PLACE_TOURN_STATUS"].format(sheet=sheet_name, tid=t_id))
         for status, count in status_counter[t_id].items():
             log.debug(LOG_MESSAGES["PLACE_TOURN_STATUS_ROW"].format(sheet=sheet_name, status=status, count=count))
+
+    # Дополнительно: вернуть структуру tournament_level если потребуется для диагностики
     return final_place_df, tournaments
 
 def apply_stat_grp_conditional_formatting(writer, sheet_name, stat_prefixes=('stat_', 'grp_'), log=None):
@@ -1015,7 +1034,7 @@ def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place
             if max_groups:
                 # Выбираем только первую по приоритету (обычно это Группа 1, если она есть)
                 best_group = max_groups[0]
-                grp_max = f"{GROUP_DESC_DICT[best_group]} ({best_group})"
+                grp_max = f"({best_group}) {GROUP_DESC_DICT[best_group]}"
             else:
                 grp_max = "-"
 
