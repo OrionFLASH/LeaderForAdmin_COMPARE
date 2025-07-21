@@ -254,6 +254,7 @@ STATUS_COLORS_DICT = {
     "Индикатор пропал":             {"fill": "#383838", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
     "Нет места":                    {"fill": "#F5F5F5", "font": "#C8C8C8"},
     "Нет призового значения":       {"fill": "#F5F5F5", "font": "#C8C8C8"},
+    "Нет значения ранга":           {"fill": "#F5F5F5", "font": "#C8C8C8"},
     "Не участвовал":                {"fill": "#F5F5F5", "font": "#C8C8C8"},  # Почти белый, бледно-серый текст
 
     # ==== Статусы по PLACE рейтингу ====
@@ -280,7 +281,7 @@ ALL_STATUSES_PLACE = [
     "Новый с местом (BANK)", "Новый с местом (TB)", "Новый с местом (GOSB)",
     "Такое же место (BANK)", "Такое же место (TB)", "Такое же место (GOSB)",
     "Нет места",
-    "Нет призового значения",
+    "Нет значения ранга",
     "Не участвовал",
     "Хуже место (BANK)", "Хуже место (TB)", "Хуже место (GOSB)",
     "Место пропало (BANK)", "Место пропало (TB)", "Место пропало (GOSB)",
@@ -963,7 +964,7 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
             if value is not None:
                 final_value = value
             elif was_in_before or was_in_after:
-                final_value = "Нет призового значения"
+                final_value = "Нет значения ранга"
             else:
                 final_value = "Не участвовал"
 
