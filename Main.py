@@ -316,6 +316,50 @@ STATUS_LEGEND_DATA = [
     ("Не участвовал", "Отсутствует в обеих выборках", "#EDEDED"),
 ]
 
+STATUS_LEGEND_FULL = [
+    # --- FINAL: Категории ---
+    ("Новый призёр",                   "NewWinner",        "Участник впервые попал в призёры",                "#00B050", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
+    ("Поднялся в рейтинге призеров",   "UpInWinners",      "Улучшил место среди призёров",                    "#C6EFCE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
+    ("Стал призёром",                  "BecameWinner",     "Был без награды, попал в призёры",                "#00B0F0", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
+    ("Сохранил призовую позицию",      "KeptPlace",        "Остался на том же призовом месте",                "#D9EAD3", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 2"),
+    ("Снизил призовое место",           "DownInWinners",    "Место стал хуже среди призёров",                  "#FFC7CE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 3"),
+    ("Лишился награды",                "LostAward",        "Был призёром, стал без награды",                  "#FF0000", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 4"),
+    ("Удалённый призёр",               "RemovedWinner",    "Был призёром, но исчез из списка",                "#808080", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 4"),
+    ("Остался вне призеров",           "StayedNoAward",    "Был вне призёров и остался вне",                  "#BFBFBF", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
+    ("Новый участник без награды",     "NewNoAward",       "Появился впервые, но не стал призёром",           "#E2EFDA", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
+    ("Удалённый участник без награды", "RemovedNoAward",   "Был в прошлом, исчез, не был призёром",           "#808080", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
+    ("Нет призового значения",         "NoPrizeRank",      "Был в выгрузках, но нет ранга/категории",         "#F5F5F5", "#C8C8C8", "FINAL", "-"),
+    ("Не участвовал",                  "NotParticipated",  "Отсутствует в обеих выгрузках",                   "#F5F5F5", "#C8C8C8", "FINAL, FINAL_PLACE", "Группа 6"),
+
+    # --- FINAL_PLACE: Места ---
+    ("Улучшил место (BANK)",           "ImprovedPlace_BANK", "Место улучшилось по BANK",                       "#C6EFCE", "#000000", "FINAL_PLACE, divisionRatings_BANK_placeInRating_Compare", "-"),
+    ("Улучшил место (TB)",             "ImprovedPlace_TB",   "Место улучшилось по TB",                         "#C6EFCE", "#000000", "FINAL_PLACE, divisionRatings_TB_placeInRating_Compare", "-"),
+    ("Улучшил место (GOSB)",           "ImprovedPlace_GOSB", "Место улучшилось по GOSB",                       "#C6EFCE", "#000000", "FINAL_PLACE, divisionRatings_GOSB_placeInRating_Compare", "-"),
+    ("Хуже место (BANK)",              "WorsePlace_BANK",    "Место стало хуже по BANK",                       "#FFC7CE", "#000000", "FINAL_PLACE, divisionRatings_BANK_placeInRating_Compare", "-"),
+    ("Хуже место (TB)",                "WorsePlace_TB",      "Место стало хуже по TB",                         "#FFC7CE", "#000000", "FINAL_PLACE, divisionRatings_TB_placeInRating_Compare", "-"),
+    ("Хуже место (GOSB)",              "WorsePlace_GOSB",    "Место стало хуже по GOSB",                       "#FFC7CE", "#000000", "FINAL_PLACE, divisionRatings_GOSB_placeInRating_Compare", "-"),
+    ("Новый с местом (BANK)",          "NewWithPlace_BANK",  "Появилось место по BANK",                        "#E2EFDA", "#000000", "FINAL_PLACE, divisionRatings_BANK_placeInRating_Compare", "-"),
+    ("Новый с местом (TB)",            "NewWithPlace_TB",    "Появилось место по TB",                          "#E2EFDA", "#000000", "FINAL_PLACE, divisionRatings_TB_placeInRating_Compare", "-"),
+    ("Новый с местом (GOSB)",          "NewWithPlace_GOSB",  "Появилось место по GOSB",                        "#E2EFDA", "#000000", "FINAL_PLACE, divisionRatings_GOSB_placeInRating_Compare", "-"),
+    ("Место пропало (BANK)",           "LostPlace_BANK",     "Место исчезло по BANK",                          "#383838", "#FFFFFF", "FINAL_PLACE, divisionRatings_BANK_placeInRating_Compare", "-"),
+    ("Место пропало (TB)",             "LostPlace_TB",       "Место исчезло по TB",                            "#383838", "#FFFFFF", "FINAL_PLACE, divisionRatings_TB_placeInRating_Compare", "-"),
+    ("Место пропало (GOSB)",           "LostPlace_GOSB",     "Место исчезло по GOSB",                          "#383838", "#FFFFFF", "FINAL_PLACE, divisionRatings_GOSB_placeInRating_Compare", "-"),
+    ("Такое же место (BANK)",          "SamePlace_BANK",     "Место не изменилось по BANK",                    "#BFBFBF", "#000000", "FINAL_PLACE, divisionRatings_BANK_placeInRating_Compare", "-"),
+    ("Такое же место (TB)",            "SamePlace_TB",       "Место не изменилось по TB",                      "#BFBFBF", "#000000", "FINAL_PLACE, divisionRatings_TB_placeInRating_Compare", "-"),
+    ("Такое же место (GOSB)",          "SamePlace_GOSB",     "Место не изменилось по GOSB",                    "#BFBFBF", "#000000", "FINAL_PLACE, divisionRatings_GOSB_placeInRating_Compare", "-"),
+    ("Нет места",                      "NoPlace",            "Место отсутствует (нет ранга)",                  "#F5F5F5", "#C8C8C8", "FINAL_PLACE, *_placeInRating_Compare", "-"),
+    ("Нет значения ранга",             "NoRankValue",        "В выгрузке был, но нет числа места",             "#F5F5F5", "#C8C8C8", "FINAL_PLACE", "-"),
+
+    # --- Индикаторы ---
+    ("Индикатор вырос",                "IndicatorUp",        "Показатель вырос",                               "#C6EFCE", "#000000", "COMPARE, indicatorValue_Compare", "-"),
+    ("Индикатор упал",                 "IndicatorDown",      "Показатель упал",                                "#FFC7CE", "#000000", "COMPARE, indicatorValue_Compare", "-"),
+    ("Новый индикатор",                "NewIndicator",       "Появился показатель",                            "#E2EFDA", "#000000", "COMPARE, indicatorValue_Compare", "-"),
+    ("Индикатор пропал",               "IndicatorLost",      "Показатель исчез",                               "#383838", "#FFFFFF", "COMPARE, indicatorValue_Compare", "-"),
+    ("Тот же индикатор",               "SameIndicator",      "Показатель не изменился",                        "#BFBFBF", "#000000", "COMPARE, indicatorValue_Compare", "-"),
+    ("",                               "NoChange",           "Нет изменений",                                  "#F5F5F5", "#C8C8C8", "COMPARE", "-"),
+]
+
+
 # --- Группы для FINAL и их описания для легенды и GRP_MAX ---
 GROUP_DESC_DICT = {
     "Группа 1": "Поднялся в рейтинге призеров, Новый призёр, Стал призёром",
@@ -775,35 +819,31 @@ def apply_status_colors(writer, df, sheet_name, status_color_map, status_columns
     logging.info(LOG_MESSAGES["STATUS_COLOR_DONE"].format(sheet=sheet_name))
 
 def add_status_legend(writer, legend_data, sheet_name=SHEET_NAMES['status_legend']):
-    # Добавляем группы в легенду (теперь через словарь)
-    for group, desc in GROUP_DESC_DICT.items():
-        legend_data.append((f"{desc} ({group})", f"Группа статусов: {desc}", "#FFFFFF"))
-
-    df_legend = pd.DataFrame(legend_data, columns=["Статус", "Описание", "Цвет"])
+    # legend_data: массив из STATUS_LEGEND_FULL
+    columns = ["Статус", "Код", "Описание", "Цвет заливки", "Цвет текста", "Где применяется", "Группа"]
+    df_legend = pd.DataFrame(legend_data, columns=columns)
     df_legend.to_excel(writer, sheet_name=sheet_name, index=False)
 
     ws = writer.sheets[sheet_name]
-    from openpyxl.styles import PatternFill, Font
-    from openpyxl.utils import get_column_letter
 
-    # Автоширина + цветовая заливка
-    for row_idx, (_, _, color) in enumerate(legend_data, start=2):
-        cell = ws.cell(row=row_idx, column=3)  # колонка "Цвет"
-        hex_color = color.lstrip('#')
-        cell.fill = PatternFill(fill_type="solid", fgColor=hex_color)
-        if hex_color.lower() in {"383838", "808080"}:
-            cell.font = Font(color="FFFFFF")
-
+    # Цветовые заливки + автоширина
+    for row_idx, row in enumerate(legend_data, start=2):
+        fill = row[3].lstrip('#')
+        font = row[4].lstrip('#')
+        ws.cell(row=row_idx, column=4).fill = PatternFill(fill_type="solid", fgColor=fill)
+        ws.cell(row=row_idx, column=4).font = Font(color=font)
+        ws.cell(row=row_idx, column=5).font = Font(color=font)
     # Жирный заголовок
     for cell in ws[1]:
         cell.font = Font(bold=True)
-
-    # Автоширина колонок
+    # Автоширина
+    from openpyxl.utils import get_column_letter
     for i, column_cells in enumerate(ws.columns, 1):
         max_len = max(len(str(cell.value)) if cell.value is not None else 0 for cell in column_cells)
         ws.column_dimensions[get_column_letter(i)].width = max_len + 2
 
     logging.info(LOG_MESSAGES["STATUS_LEGEND_ADD"].format(sheet=sheet_name))
+
 
 
 def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_map, df_before, df_after, log, sheet_name="FINAL"):
@@ -1257,7 +1297,8 @@ def main():
         )
         logger.info(LOG_MESSAGES["MAIN_COLORS_APPLIED"].format(sheet=SHEET_NAMES['compare']))
 
-        add_status_legend(writer, STATUS_LEGEND_DATA, sheet_name=SHEET_NAMES['status_legend'])
+        add_status_legend(writer, STATUS_LEGEND_FULL, sheet_name=SHEET_NAMES['status_legend'])
+
         logger.info(LOG_MESSAGES["MAIN_LEGEND_ADDED"])
 
         # Выбор листа FINAL как активного при открытии файла
