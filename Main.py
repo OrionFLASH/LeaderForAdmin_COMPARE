@@ -123,10 +123,10 @@ SUMMARY_TEMPLATE_EXT = (
 # --- Статусы, при которых считаем, что изменений не произошло ---
 # Если встречается один из этих кодов, строка считается без изменений
 NOCHANGE_STATUSES = [
-    "", "Тот же индикатор", "Остался вне призеров", "Сохранил призовую позицию", "Remove", "Индикатор пропал",
-    "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
-    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
-    "Rang NO CHANGE", "Не участвовал",
+    "", "Тот же индикатор", "Остался вне призеров", "Сохранил призовую позицию", "Индикатор пропал",
+    "Место пропало (BANK)", "Место пропало (TB)", "Место пропало (GOSB)",
+    "Такое же место (BANK)", "Такое же место (TB)", "Такое же место (GOSB)",
+    "Не участвовал"
 ]
 
 # --- Основные колонки в исходных данных ---
@@ -138,14 +138,14 @@ PRIORITY_COLS = [
     'successValue', 'indicatorValue', 'divisionRatings_BANK_placeInRating',
     'divisionRatings_TB_placeInRating', 'divisionRatings_GOSB_placeInRating',
     'divisionRatings_BANK_ratingCategoryName', 'divisionRatings_TB_ratingCategoryName',
-    'divisionRatings_GOSB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName'
 ]
 # Ключевые поля, по которым склеиваются данные "до" и "после"
 COMPARE_KEYS = [
     'tournamentId',
     'employeeNumber',
     'lastName',
-    'firstName',
+    'firstName'
 ]
 
 # --- Карта закрепления (freeze panes) ---
@@ -171,7 +171,7 @@ COMPARE_FIELDS = [
     'divisionRatings_GOSB_placeInRating',
     'divisionRatings_BANK_ratingCategoryName',
     'divisionRatings_TB_ratingCategoryName',
-    'divisionRatings_GOSB_ratingCategoryName',
+    'divisionRatings_GOSB_ratingCategoryName'
 ]
 # Поля, которые должны быть приведены к типу int
 INT_FIELDS = [
@@ -180,7 +180,7 @@ INT_FIELDS = [
     'divisionRatings_GOSB_groupId',
     'divisionRatings_BANK_placeInRating',
     'divisionRatings_TB_placeInRating',
-    'divisionRatings_GOSB_placeInRating',
+    'divisionRatings_GOSB_placeInRating'
 ]
 # Поля, которые хранят вещественные значения
 FLOAT_FIELDS = [
@@ -197,11 +197,11 @@ FINAL_STATUS_LIST = [
 
 # Для FINAL_PLACE нужны только PLACE-статусы:
 FINAL_PLACE_STATUS_LIST = [
-    "Rang BANK UP", "Rang TB UP", "Rang GOSB UP",
-    "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
-    "Rang BANK NEW", "Rang TB NEW", "Rang GOSB NEW",
-    "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
-    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE"
+    "Улучшил место (BANK)", "Улучшил место (TB)", "Улучшил место (GOSB)",
+    "Хуже место (BANK)", "Хуже место (TB)", "Хуже место (GOSB)",
+    "Новый с местом (BANK)", "Новый с местом (TB)", "Новый с местом (GOSB)",
+    "Место пропало (BANK)", "Место пропало (TB)", "Место пропало (GOSB)",
+    "Такое же место (BANK)", "Такое же место (TB)", "Такое же место (GOSB)"
 ]
 
 STATUS_GROUPS = [
@@ -210,7 +210,7 @@ STATUS_GROUPS = [
     ("Группа 3", ["Снизил призовое место"]),
     ("Группа 4", ["Лишился награды", "Удалённый призёр"]),
     ("Группа 5", ["Остался вне призеров", "Новый участник без награды", "Удалённый участник без награды"]),
-    ("Группа 6", ["Не участвовал"]),
+    ("Группа 6", ["Не участвовал"])
 ]
 
 # --- Все цвета статусов здесь ---
@@ -228,8 +228,8 @@ STATUS_COLORS_DICT = {
     "Новый участник без награды":   {"fill": "#E2EFDA", "font": "#000000"},  # Бледно-зелёный
 
     # ==== Прочие статусы ====
-    "Change DOWN":                  {"fill": "#FFC7CE", "font": "#000000"},
-    "Change UP":                    {"fill": "#C6EFCE", "font": "#000000"},
+    "Индикатор упал":                  {"fill": "#FFC7CE", "font": "#000000"},
+    "Индикатор вырос":                    {"fill": "#C6EFCE", "font": "#000000"},
     "Новый индикатор":              {"fill": "#E2EFDA", "font": "#000000"},
     "Индикатор пропал":             {"fill": "#383838", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
     "Нет места":                    {"fill": "#EDEDED", "font": "#000000"},
@@ -237,33 +237,33 @@ STATUS_COLORS_DICT = {
     "Не участвовал":                {"fill": "#F5F5F5", "font": "#C8C8C8"},  # Почти белый, бледно-серый текст
 
     # ==== Статусы по PLACE рейтингу ====
-    'Rang BANK UP':                 {"fill": "#C6EFCE", "font": "#000000"},
-    'Rang TB UP':                   {"fill": "#C6EFCE", "font": "#000000"},
-    'Rang GOSB UP':                 {"fill": "#C6EFCE", "font": "#000000"},
-    'Rang BANK DOWN':               {"fill": "#FFC7CE", "font": "#000000"},
-    'Rang TB DOWN':                 {"fill": "#FFC7CE", "font": "#000000"},
-    'Rang GOSB DOWN':               {"fill": "#FFC7CE", "font": "#000000"},
-    'Rang BANK NEW':                {"fill": "#E2EFDA", "font": "#000000"},
-    'Rang TB NEW':                  {"fill": "#E2EFDA", "font": "#000000"},
-    'Rang GOSB NEW':                {"fill": "#E2EFDA", "font": "#000000"},
-    'Rang BANK REMOVE':             {"fill": "#383838", "font": "#FFFFFF"},
-    'Rang TB REMOVE':               {"fill": "#383838", "font": "#FFFFFF"},
-    'Rang GOSB REMOVE':             {"fill": "#383838", "font": "#FFFFFF"},
-    'Rang BANK NO CHANGE':          {"fill": "#BFBFBF", "font": "#000000"},
-    'Rang TB NO CHANGE':            {"fill": "#BFBFBF", "font": "#000000"},
-    'Rang GOSB NO CHANGE':          {"fill": "#BFBFBF", "font": "#000000"},
+    'Улучшил место (BANK)':                 {"fill": "#C6EFCE", "font": "#000000"},
+    'Улучшил место (TB)':                   {"fill": "#C6EFCE", "font": "#000000"},
+    'Улучшил место (GOSB)':                 {"fill": "#C6EFCE", "font": "#000000"},
+    'Хуже место (BANK)':               {"fill": "#FFC7CE", "font": "#000000"},
+    'Хуже место (TB)':                 {"fill": "#FFC7CE", "font": "#000000"},
+    'Хуже место (GOSB)':               {"fill": "#FFC7CE", "font": "#000000"},
+    'Новый с местом (BANK)':                {"fill": "#E2EFDA", "font": "#000000"},
+    'Новый с местом (TB)':                  {"fill": "#E2EFDA", "font": "#000000"},
+    'Новый с местом (GOSB)':                {"fill": "#E2EFDA", "font": "#000000"},
+    'Место пропало (BANK)':             {"fill": "#383838", "font": "#FFFFFF"},
+    'Место пропало (TB)':               {"fill": "#383838", "font": "#FFFFFF"},
+    'Место пропало (GOSB)':             {"fill": "#383838", "font": "#FFFFFF"},
+    'Такое же место (BANK)':          {"fill": "#BFBFBF", "font": "#000000"},
+    'Такое же место (TB)':            {"fill": "#BFBFBF", "font": "#000000"},
+    'Такое же место (GOSB)':          {"fill": "#BFBFBF", "font": "#000000"},
 }
 
 # --- Статусы для листа FINAL_PLACE (placeInRating) ---
 ALL_STATUSES_PLACE = [
-    "Rang BANK UP", "Rang TB UP", "Rang GOSB UP",
-    "Rang BANK NEW", "Rang TB NEW", "Rang GOSB NEW",
-    "Rang BANK NO CHANGE", "Rang TB NO CHANGE", "Rang GOSB NO CHANGE",
+    "Улучшил место (BANK)", "Улучшил место (TB)", "Улучшил место (GOSB)",
+    "Новый с местом (BANK)", "Новый с местом (TB)", "Новый с местом (GOSB)",
+    "Такое же место (BANK)", "Такое же место (TB)", "Такое же место (GOSB)",
     "Нет места",
     "Участник",
     "Не участвовал",
-    "Rang BANK DOWN", "Rang TB DOWN", "Rang GOSB DOWN",
-    "Rang BANK REMOVE", "Rang TB REMOVE", "Rang GOSB REMOVE",
+    "Хуже место (BANK)", "Хуже место (TB)", "Хуже место (GOSB)",
+    "Место пропало (BANK)", "Место пропало (TB)", "Место пропало (GOSB)",
 ]
 
 # --- Ключевые статусные колонки для сравнения, фильтрации, раскраски ---
@@ -322,37 +322,37 @@ STATUS_INDICATOR = {
     "val_add":      "Новый индикатор",      # Значение появилось (было None/отсутствовало, стало не None)
     "val_remove":   "Индикатор пропал",  # Значение исчезло (было не None, стало None)
     "val_nochange": "Тот же индикатор",    # Значение не изменилось (равно до и после)
-    "val_down":     "Change DOWN",  # Значение уменьшилось (стало ниже)
-    "val_up":       "Change UP"     # Значение увеличилось (стало выше)
+    "val_down":     "Индикатор упал",  # Значение уменьшилось (стало ниже)
+    "val_up":       "Индикатор вырос"     # Значение увеличилось (стало выше)
 }
 
 # --- Статусы сравнения для места (placeInRating) BANK ---
 STATUS_BANK_PLACE = {
-    "val_add":      "Rang BANK NEW",      # Место появилось (раньше не было, теперь есть)
-    "val_remove":   "Rang BANK REMOVE",   # Место исчезло (было, теперь нет)
-    "val_nochange": "Rang BANK NO CHANGE",# Место не изменилось
-    "val_up":       "Rang BANK UP",       # Место улучшилось (меньше номер — выше место, например: с 5 на 2)
-    "val_down":     "Rang BANK DOWN",     # Место ухудшилось (больше номер — ниже место, например: с 2 на 5)
+    "val_add":      "Новый с местом (BANK)",      # Место появилось (раньше не было, теперь есть)
+    "val_remove":   "Место пропало (BANK)",   # Место исчезло (было, теперь нет)
+    "val_nochange": "Такое же место (BANK)",# Место не изменилось
+    "val_up":       "Улучшил место (BANK)",       # Место улучшилось (меньше номер — выше место, например: с 5 на 2)
+    "val_down":     "Хуже место (BANK)",     # Место ухудшилось (больше номер — ниже место, например: с 2 на 5)
     "val_norank":   "Нет места"             # Место отсутствовало и до, и после (None/NaN)
 }
 
 # --- Статусы сравнения для места (placeInRating) TB ---
 STATUS_TB_PLACE = {
-    "val_add":      "Rang TB NEW",        # Место появилось (раньше не было, теперь есть)
-    "val_remove":   "Rang TB REMOVE",     # Место исчезло (было, теперь нет)
-    "val_nochange": "Rang TB NO CHANGE",  # Место не изменилось
-    "val_up":       "Rang TB UP",         # Место улучшилось (меньше номер)
-    "val_down":     "Rang TB DOWN",       # Место ухудшилось (больше номер)
+    "val_add":      "Новый с местом (TB)",        # Место появилось (раньше не было, теперь есть)
+    "val_remove":   "Место пропало (TB)",     # Место исчезло (было, теперь нет)
+    "val_nochange": "Такое же место (TB)",  # Место не изменилось
+    "val_up":       "Улучшил место (TB)",         # Место улучшилось (меньше номер)
+    "val_down":     "Хуже место (TB)",       # Место ухудшилось (больше номер)
     "val_norank":   "Нет места"             # Место отсутствовало и до, и после (None/NaN)
 }
 
 # --- Статусы сравнения для места (placeInRating) GOSB ---
 STATUS_GOSB_PLACE = {
-    "val_add":      "Rang GOSB NEW",      # Место появилось (раньше не было, теперь есть)
-    "val_remove":   "Rang GOSB REMOVE",   # Место исчезло (было, теперь нет)
-    "val_nochange": "Rang GOSB NO CHANGE",# Место не изменилось
-    "val_up":       "Rang GOSB UP",       # Место улучшилось (меньше номер)
-    "val_down":     "Rang GOSB DOWN",     # Место ухудшилось (больше номер)
+    "val_add":      "Новый с местом (GOSB)",      # Место появилось (раньше не было, теперь есть)
+    "val_remove":   "Место пропало (GOSB)",   # Место исчезло (было, теперь нет)
+    "val_nochange": "Такое же место (GOSB)",# Место не изменилось
+    "val_up":       "Улучшил место (GOSB)",       # Место улучшилось (меньше номер)
+    "val_down":     "Хуже место (GOSB)",     # Место ухудшилось (больше номер)
     "val_norank":   "Нет места"             # Место отсутствовало и до, и после (None/NaN)
 }
 
