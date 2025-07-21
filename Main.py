@@ -126,7 +126,7 @@ NOCHANGE_STATUSES = [
     "", "Тот же индикатор", "Остался вне призеров", "Сохранил призовую позицию", "Индикатор пропал",
     "Место пропало (BANK)", "Место пропало (TB)", "Место пропало (GOSB)",
     "Такое же место (BANK)", "Такое же место (TB)", "Такое же место (GOSB)",
-    "Не участвовал"
+    "Не участвовал", "Нет места"
 ]
 
 # --- Основные колонки в исходных данных ---
@@ -173,6 +173,26 @@ COMPARE_FIELDS = [
     'divisionRatings_TB_ratingCategoryName',
     'divisionRatings_GOSB_ratingCategoryName'
 ]
+
+COMPARE_EXPORT_COLUMNS = [
+    'tournamentId', 'employeeNumber', 'lastName', 'firstName',
+    'SourceFile',  # объединённое
+    'terDivisionName',  # объединённое
+    'divisionRatings_TB_groupId',  # объединённое
+    'divisionRatings_GOSB_groupId',  # объединённое
+
+    'BEFORE_indicatorValue', 'AFTER_indicatorValue', 'indicatorValue_Compare',
+
+    'BEFORE_divisionRatings_BANK_placeInRating', 'AFTER_divisionRatings_BANK_placeInRating', 'divisionRatings_BANK_placeInRating_Compare',
+    'BEFORE_divisionRatings_TB_placeInRating', 'AFTER_divisionRatings_TB_placeInRating', 'divisionRatings_TB_placeInRating_Compare',
+    'BEFORE_divisionRatings_GOSB_placeInRating', 'AFTER_divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating_Compare',
+
+    'BEFORE_divisionRatings_BANK_ratingCategoryName', 'AFTER_divisionRatings_BANK_ratingCategoryName', 'divisionRatings_BANK_ratingCategoryName_Compare',
+    'BEFORE_divisionRatings_TB_ratingCategoryName', 'AFTER_divisionRatings_TB_ratingCategoryName', 'divisionRatings_TB_ratingCategoryName_Compare',
+    'BEFORE_divisionRatings_GOSB_ratingCategoryName', 'AFTER_divisionRatings_GOSB_ratingCategoryName', 'divisionRatings_GOSB_ratingCategoryName_Compare',
+    # ... добавьте аналогичные группы по другим полям, если потребуется
+]
+
 # Поля, которые должны быть приведены к типу int
 INT_FIELDS = [
     'divisionRatings_BANK_groupId',
@@ -232,8 +252,8 @@ STATUS_COLORS_DICT = {
     "Индикатор вырос":                    {"fill": "#C6EFCE", "font": "#000000"},
     "Новый индикатор":              {"fill": "#E2EFDA", "font": "#000000"},
     "Индикатор пропал":             {"fill": "#383838", "font": "#FFFFFF"},  # Тёмно-серый, белый текст
-    "Нет места":                    {"fill": "#EDEDED", "font": "#000000"},
-    "Участник":                     {"fill": "#C9DAF8", "font": "#000000"},
+    "Нет места":                    {"fill": "#F5F5F5", "font": "#C8C8C8"},
+    "Нет призового значения":       {"fill": "#F5F5F5", "font": "#C8C8C8"},
     "Не участвовал":                {"fill": "#F5F5F5", "font": "#C8C8C8"},  # Почти белый, бледно-серый текст
 
     # ==== Статусы по PLACE рейтингу ====
@@ -260,7 +280,7 @@ ALL_STATUSES_PLACE = [
     "Новый с местом (BANK)", "Новый с местом (TB)", "Новый с местом (GOSB)",
     "Такое же место (BANK)", "Такое же место (TB)", "Такое же место (GOSB)",
     "Нет места",
-    "Участник",
+    "Нет призового значения",
     "Не участвовал",
     "Хуже место (BANK)", "Хуже место (TB)", "Хуже место (GOSB)",
     "Место пропало (BANK)", "Место пропало (TB)", "Место пропало (GOSB)",
@@ -842,7 +862,7 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
             if best_val is not None:
                 final_value = best_val
             elif was_in_before or was_in_after:
-                final_value = "Участник"
+                final_value = "Нет призового значения"
             else:
                 final_value = "Не участвовал"
 
@@ -859,6 +879,24 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
         for status, count in status_counter[t_id].items():
             log.debug(LOG_MESSAGES["FINAL_TOURN_STATUS_ROW"].format(sheet=sheet_name, status=status, count=count))
     return final_df, tournaments
+
+
+def format_compare_dataframe(compare_df, export_columns):
+    # 1. Объединённые колонки (пример — замените/добавьте нужные вам!)
+    compare_df = compare_df.copy()
+    compare_df['SourceFile'] = compare_df['BEFORE_SourceFile'].fillna('') + " => " + compare_df[
+        'AFTER_SourceFile'].fillna('')
+    compare_df['terDivisionName'] = compare_df['BEFORE_terDivisionName'].fillna('') + " => " + compare_df[
+        'AFTER_terDivisionName'].fillna('')
+    compare_df['divisionRatings_TB_groupId'] = compare_df['BEFORE_divisionRatings_TB_groupId'].astype(str).replace(
+        'nan', '') + " => " + compare_df['AFTER_divisionRatings_TB_groupId'].astype(str).replace('nan', '')
+    compare_df['divisionRatings_GOSB_groupId'] = compare_df['BEFORE_divisionRatings_GOSB_groupId'].astype(str).replace(
+        'nan', '') + " => " + compare_df['AFTER_divisionRatings_GOSB_groupId'].astype(str).replace('nan', '')
+
+    # 2. Формирование порядка колонок
+    columns_present = [col for col in export_columns if col in compare_df.columns]
+    extra_cols = [col for col in compare_df.columns if col not in columns_present]
+    return compare_df[columns_present + extra_cols]
 
 
 def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_after, log, sheet_name="FINAL_PLACE"):
@@ -925,7 +963,7 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
             if value is not None:
                 final_value = value
             elif was_in_before or was_in_after:
-                final_value = "Участник"
+                final_value = "Нет призового значения"
             else:
                 final_value = "Не участвовал"
 
@@ -986,7 +1024,7 @@ def add_status_count_and_top3(df, status_cols, all_statuses, log, is_final_place
     """
     Добавляет к DataFrame счетчики по статусам, top-3 (названия), и (для FINAL) — группы.
     """
-    exclude = {"Не участвовал", "Участник", "Остался вне призеров"}
+    exclude = {"Не участвовал", "Нет призового значения", "Остался вне призеров"}
     stat_names = [s for s in all_statuses if s not in exclude]
     group_names = [g[0] for g in STATUS_GROUPS] if not is_final_place else []
 
@@ -1133,6 +1171,7 @@ def main():
     # --- Формируем COMPARE ---
     t_beg_compare = datetime.now()
     compare_df, sheet_compare = make_compare_sheet(df_before, df_after, SHEET_NAMES['compare'])
+    compare_df = format_compare_dataframe(compare_df, COMPARE_EXPORT_COLUMNS)
     t_end_compare = datetime.now()
     logger.info(LOG_MESSAGES["MAIN_COMPARE_DONE"].format(
         sheet=sheet_compare, count=len(compare_df)))
