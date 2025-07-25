@@ -203,14 +203,7 @@ COMPARE_EXPORT_COLUMNS = [
     # Объединенные статусы категорий (лучший доступный уровень)  
     'BEFORE_ratingCategoryName_Best', 'AFTER_ratingCategoryName_Best', 'ratingCategoryName_Compare_Best', 'ratingCategoryName_Level',
 
-    # Исходные поля по уровням (для справки)
-    'BEFORE_divisionRatings_BANK_placeInRating', 'AFTER_divisionRatings_BANK_placeInRating', 'divisionRatings_BANK_placeInRating_Compare',
-    'BEFORE_divisionRatings_TB_placeInRating', 'AFTER_divisionRatings_TB_placeInRating', 'divisionRatings_TB_placeInRating_Compare',
-    'BEFORE_divisionRatings_GOSB_placeInRating', 'AFTER_divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating_Compare',
-
-    'BEFORE_divisionRatings_BANK_ratingCategoryName', 'AFTER_divisionRatings_BANK_ratingCategoryName', 'divisionRatings_BANK_ratingCategoryName_Compare',
-    'BEFORE_divisionRatings_TB_ratingCategoryName', 'AFTER_divisionRatings_TB_ratingCategoryName', 'divisionRatings_TB_ratingCategoryName_Compare',
-    'BEFORE_divisionRatings_GOSB_ratingCategoryName', 'AFTER_divisionRatings_GOSB_ratingCategoryName', 'divisionRatings_GOSB_ratingCategoryName_Compare',
+    # Исходные поля по уровням убраны, достаточно объединенных статусов
 ]
 
 # Поля, которые должны быть приведены к типу int
@@ -317,8 +310,22 @@ COMPARE_STATUS_COLUMNS = [
     'divisionRatings_BANK_ratingCategoryName_Compare',
     'divisionRatings_TB_ratingCategoryName_Compare',
     'divisionRatings_GOSB_ratingCategoryName_Compare'
-    # Примечание: новые объединенные статусы *_Compare_Best пока исключены из статистики
-    # до полного исправления проблемы с типами данных
+    # Примечание: объединенные статусы *_Compare_Best исключены из статистики
+]
+
+# Колонки для раскраски листа COMPARE (включая новые объединенные статусы)
+COMPARE_COLOR_COLUMNS = [
+    'indicatorValue_Compare',
+    # Объединенные статусы (для раскраски)
+    'placeInRating_Compare_Best',
+    'ratingCategoryName_Compare_Best',
+    # Исходные статусы по уровням
+    'divisionRatings_BANK_placeInRating_Compare',
+    'divisionRatings_TB_placeInRating_Compare',
+    'divisionRatings_GOSB_placeInRating_Compare',
+    'divisionRatings_BANK_ratingCategoryName_Compare',
+    'divisionRatings_TB_ratingCategoryName_Compare',
+    'divisionRatings_GOSB_ratingCategoryName_Compare'
 ]
 
 # --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
@@ -1473,7 +1480,7 @@ def main():
         logger.info(LOG_MESSAGES["MAIN_COLORS_APPLIED"].format(sheet=SHEET_NAMES['final']))
         apply_status_colors(writer, final_place_df_stat, SHEET_NAMES['final_place'], STATUS_COLORS_DICT, tournaments_place + final_place_status_names + ['TOP1', 'TOP2', 'TOP3'])
         logger.info(LOG_MESSAGES["MAIN_COLORS_APPLIED"].format(sheet=SHEET_NAMES['final_place']))
-        apply_status_colors(writer, compare_export_df, SHEET_NAMES['compare'], STATUS_COLORS_DICT, COMPARE_STATUS_COLUMNS)
+        apply_status_colors(writer, compare_export_df, SHEET_NAMES['compare'], STATUS_COLORS_DICT, COMPARE_COLOR_COLUMNS)
         logger.info(LOG_MESSAGES["MAIN_COLORS_APPLIED"].format(sheet=SHEET_NAMES['compare']))
 
         add_status_legend(writer, STATUS_LEGEND_FULL, sheet_name=SHEET_NAMES['status_legend'])
