@@ -53,7 +53,7 @@ ALLOWED_TOURNAMENT_IDS = [
 # Если True, то на листы BEFORE и AFTER будут загружены только турниры из ALLOWED_TOURNAMENT_IDS
 # Если ALLOWED_TOURNAMENT_IDS пустой, то грузятся все турниры независимо от этого параметра
 # Если False, то всегда грузятся все турниры
-FILTER_TOURNAMENTS_IN_BEFORE_AFTER = False
+FILTER_TOURNAMENTS_IN_BEFORE_AFTER = True
 
 LOG_MESSAGES = {
     "LOGGER_SESSION_START": "\n-------- NEW LOG START AT {date} ({time}) -------\n",
@@ -197,6 +197,13 @@ COMPARE_EXPORT_COLUMNS = [
 
     'BEFORE_indicatorValue', 'AFTER_indicatorValue', 'indicatorValue_Compare',
 
+    # Объединенные статусы мест (лучший доступный уровень)
+    'BEFORE_placeInRating_Best', 'AFTER_placeInRating_Best', 'placeInRating_Compare_Best', 'placeInRating_Level',
+    
+    # Объединенные статусы категорий (лучший доступный уровень)  
+    'BEFORE_ratingCategoryName_Best', 'AFTER_ratingCategoryName_Best', 'ratingCategoryName_Compare_Best', 'ratingCategoryName_Level',
+
+    # Исходные поля по уровням (для справки)
     'BEFORE_divisionRatings_BANK_placeInRating', 'AFTER_divisionRatings_BANK_placeInRating', 'divisionRatings_BANK_placeInRating_Compare',
     'BEFORE_divisionRatings_TB_placeInRating', 'AFTER_divisionRatings_TB_placeInRating', 'divisionRatings_TB_placeInRating_Compare',
     'BEFORE_divisionRatings_GOSB_placeInRating', 'AFTER_divisionRatings_GOSB_placeInRating', 'divisionRatings_GOSB_placeInRating_Compare',
@@ -204,7 +211,6 @@ COMPARE_EXPORT_COLUMNS = [
     'BEFORE_divisionRatings_BANK_ratingCategoryName', 'AFTER_divisionRatings_BANK_ratingCategoryName', 'divisionRatings_BANK_ratingCategoryName_Compare',
     'BEFORE_divisionRatings_TB_ratingCategoryName', 'AFTER_divisionRatings_TB_ratingCategoryName', 'divisionRatings_TB_ratingCategoryName_Compare',
     'BEFORE_divisionRatings_GOSB_ratingCategoryName', 'AFTER_divisionRatings_GOSB_ratingCategoryName', 'divisionRatings_GOSB_ratingCategoryName_Compare',
-    # ... добавьте аналогичные группы по другим полям, если потребуется
 ]
 
 # Поля, которые должны быть приведены к типу int
@@ -304,6 +310,10 @@ ALL_STATUSES_PLACE = [
 # --- Ключевые статусные колонки для сравнения, фильтрации, раскраски ---
 COMPARE_STATUS_COLUMNS = [
     'indicatorValue_Compare',
+    # Объединенные статусы (основные для анализа)
+    'placeInRating_Compare_Best',
+    'ratingCategoryName_Compare_Best',
+    # Исходные статусы по уровням (для детального анализа)
     'divisionRatings_BANK_placeInRating_Compare',
     'divisionRatings_TB_placeInRating_Compare',
     'divisionRatings_GOSB_placeInRating_Compare',
@@ -693,6 +703,59 @@ def filter_dataframe_by_tournaments(df, allowed_ids, filter_enabled, label="Data
     
     return filtered_df
 
+def select_best_status_and_level(row, field_type="placeInRating"):
+    """
+    Выбирает лучший доступный статус из трех уровней (BANK -> TB -> GOSB).
+    
+    Args:
+        row: строка DataFrame
+        field_type: тип поля ("placeInRating" или "ratingCategoryName")
+    
+    Returns:
+        tuple: (before_value, after_value, compare_status, level)
+    """
+    levels = ["BANK", "TB", "GOSB"]
+    
+    for level in levels:
+        compare_col = f'divisionRatings_{level}_{field_type}_Compare'
+        before_col = f'BEFORE_divisionRatings_{level}_{field_type}'
+        after_col = f'AFTER_divisionRatings_{level}_{field_type}'
+        
+        if compare_col in row:
+            status = row[compare_col]
+            # Для placeInRating проверяем "Нет места", для ratingCategoryName - пустые значения
+            if field_type == "placeInRating":
+                if pd.notnull(status) and str(status).strip() != "Нет места":
+                    return (
+                        row.get(before_col), 
+                        row.get(after_col), 
+                        status, 
+                        level
+                    )
+            else:  # ratingCategoryName
+                if pd.notnull(status) and str(status).strip() not in ["", "Нет призового значения", "Не участвовал"]:
+                    return (
+                        row.get(before_col), 
+                        row.get(after_col), 
+                        status, 
+                        level
+                    )
+    
+    # Если не нашли подходящий статус, возвращаем значения из BANK уровня
+    level = "BANK"
+    compare_col = f'divisionRatings_{level}_{field_type}_Compare'
+    before_col = f'BEFORE_divisionRatings_{level}_{field_type}'
+    after_col = f'AFTER_divisionRatings_{level}_{field_type}'
+    
+    fallback_status = "Нет места" if field_type == "placeInRating" else "Нет призового значения"
+    
+    return (
+        row.get(before_col), 
+        row.get(after_col), 
+        row.get(compare_col, fallback_status), 
+        level
+    )
+
 def make_compare_sheet(df_before, df_after, sheet_name):
     logging.info(LOG_MESSAGES["COMPARE_SHEET_START"])
 
@@ -771,7 +834,31 @@ def make_compare_sheet(df_before, df_after, sheet_name):
     ]:
         compare_df[f"{col}_Compare"] = compare_df.apply(lambda row: category_compare_enhanced(row, col), axis=1)
 
+    # === Объединение статусов по приоритету BANK -> TB -> GOSB ===
+    logging.info("Формирование объединенных статусов по лучшему доступному уровню...")
+    
+    # Для placeInRating
+    place_results = compare_df.apply(lambda row: select_best_status_and_level(row, "placeInRating"), axis=1)
+    compare_df['BEFORE_placeInRating_Best'] = [res[0] for res in place_results]
+    compare_df['AFTER_placeInRating_Best'] = [res[1] for res in place_results]
+    compare_df['placeInRating_Compare_Best'] = [res[2] for res in place_results]
+    compare_df['placeInRating_Level'] = [res[3] for res in place_results]
+    
+    # Для ratingCategoryName
+    category_results = compare_df.apply(lambda row: select_best_status_and_level(row, "ratingCategoryName"), axis=1)
+    compare_df['BEFORE_ratingCategoryName_Best'] = [res[0] for res in category_results]
+    compare_df['AFTER_ratingCategoryName_Best'] = [res[1] for res in category_results]
+    compare_df['ratingCategoryName_Compare_Best'] = [res[2] for res in category_results]
+    compare_df['ratingCategoryName_Level'] = [res[3] for res in category_results]
+    
+    logging.info("Объединенные статусы сформированы")
+
     final_cols = COMPARE_KEYS + COMPARE_STATUS_COLUMNS + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
+    # Добавляем новые колонки в final_cols
+    final_cols += [
+        'BEFORE_placeInRating_Best', 'AFTER_placeInRating_Best', 'placeInRating_Compare_Best', 'placeInRating_Level',
+        'BEFORE_ratingCategoryName_Best', 'AFTER_ratingCategoryName_Best', 'ratingCategoryName_Compare_Best', 'ratingCategoryName_Level'
+    ]
     compare_df = compare_df.reindex(columns=final_cols)
 
     # --- Фильтрация по tournamentId ---
@@ -898,11 +985,8 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
     before_pairs = set(zip(df_before['employeeNumber'], df_before['tournamentId']))
     after_pairs = set(zip(df_after['employeeNumber'], df_after['tournamentId']))
 
-    status_cols = [
-        'divisionRatings_BANK_ratingCategoryName_Compare',
-        'divisionRatings_TB_ratingCategoryName_Compare',
-        'divisionRatings_GOSB_ratingCategoryName_Compare'
-    ]
+    # Теперь используем объединенный статус категорий
+    best_status_col = 'ratingCategoryName_Compare_Best'
 
     result_rows = []
     status_counter = {t_id: {} for t_id in tournaments}
@@ -914,20 +998,13 @@ def build_final_sheet_fast(compare_df, allowed_ids, out_prefix, category_rank_ma
         for t_id in tournaments:
             idx = emp_key + (t_id,)
             best_val = None
-            best_rank = float('inf')
 
             subset = indexed.loc[idx] if idx in indexed.index else None
             if subset is not None:
-                candidates = []
-                for col in status_cols:
-                    val = subset[col]
-                    if pd.notnull(val) and str(val).strip().upper() not in ['NONE', 'NULL', '']:
-                        candidates.append(val)
-                for v in candidates:
-                    rank = category_rank_map.get(v, 99)
-                    if rank < best_rank:
-                        best_val = v
-                        best_rank = rank
+                # Используем объединенный статус, который уже выбран по приоритету BANK->TB->GOSB
+                val = subset.get(best_status_col)
+                if pd.notnull(val) and str(val).strip() not in ['', 'Нет призового значения', 'Не участвовал']:
+                    best_val = val
 
             was_in_before = (emp['employeeNumber'], t_id) in before_pairs
             was_in_after = (emp['employeeNumber'], t_id) in after_pairs
@@ -1031,23 +1108,8 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     log.info(LOG_MESSAGES["PLACE_UNIQUE_EMPLOYEES"].format(sheet=sheet_name, num_employees=len(employees)))
     log.info(LOG_MESSAGES["PLACE_TOURNAMENTS"].format(sheet=sheet_name, num_tournaments=len(tournaments)))
 
-    # 1. Для каждого турнира определить приоритетный уровень (BANK, TB, GOSB)
-    tournament_level = {}
-    for t_id in tournaments:
-        has_bank = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_BANK_placeInRating_Compare'] \
-            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']).any()
-        has_tb = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_TB_placeInRating_Compare'] \
-            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']).any()
-        has_gosb = compare_df[compare_df['tournamentId'] == t_id]['divisionRatings_GOSB_placeInRating_Compare'] \
-            .apply(lambda x: pd.notnull(x) and str(x).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']).any()
-        if has_bank:
-            tournament_level[t_id] = 'BANK'
-        elif has_tb:
-            tournament_level[t_id] = 'TB'
-        elif has_gosb:
-            tournament_level[t_id] = 'GOSB'
-        else:
-            tournament_level[t_id] = None
+    # Теперь используем объединенный статус места
+    best_place_col = 'placeInRating_Compare_Best'
 
     # Быстрые индексы
     indexed = compare_df.set_index(['employeeNumber', 'lastName', 'firstName', 'tournamentId'])
@@ -1057,7 +1119,7 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
     result_rows = []
     status_counter = {t_id: {} for t_id in tournaments}
 
-    # 2. Строим по выбранному уровню
+    # Строим по объединенному статусу мест
     for _, emp in employees.iterrows():
         emp_key = (emp['employeeNumber'], emp['lastName'], emp['firstName'])
         row = {col: emp[col] for col in emp_cols}
@@ -1065,12 +1127,12 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
         for t_id in tournaments:
             idx = emp_key + (t_id,)
             value = None
-            level = tournament_level[t_id]
-            if idx in indexed.index and level is not None:
+            
+            if idx in indexed.index:
                 rec = indexed.loc[idx]
-                colname = f'divisionRatings_{level}_placeInRating_Compare'
-                v = rec.get(colname, None)
-                if pd.notnull(v) and str(v).strip().upper() not in ['NONE', 'NULL', '', 'Нет места']:
+                # Используем объединенный статус, который уже выбран по приоритету BANK->TB->GOSB
+                v = rec.get(best_place_col, None)
+                if pd.notnull(v) and str(v).strip() not in ['', 'Нет места', 'Нет значения ранга', 'Не участвовал']:
                     value = v
 
             was_in_before = (emp['employeeNumber'], t_id) in before_pairs
@@ -1084,7 +1146,6 @@ def build_final_place_sheet_from_compare(compare_df, allowed_ids, df_before, df_
                 final_value = "Не участвовал"
 
             row[t_id] = final_value
-            # 3. Подсчёт только по выбранному уровню
             status_counter[t_id][final_value] = status_counter[t_id].get(final_value, 0) + 1
 
         result_rows.append(row)
