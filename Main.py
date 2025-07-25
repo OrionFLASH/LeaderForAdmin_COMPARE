@@ -23,7 +23,7 @@ TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XL
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 LOG_BASENAME = "LOG_INFO"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
-AFTER_FILENAME = "leadersForAdmin_ALL_20250725-135321.json"
+AFTER_FILENAME = "leadersForAdmin_ALL_20250725-174938.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
 # === Параметры справочников турниров и конкурсов ===
 CATALOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//CSV"
@@ -838,18 +838,18 @@ def make_compare_sheet(df_before, df_after, sheet_name):
     logging.info("Формирование объединенных статусов по лучшему доступному уровню...")
     
     # Для placeInRating
-    place_results = compare_df.apply(lambda row: select_best_status_and_level(row, "placeInRating"), axis=1)
-    compare_df['BEFORE_placeInRating_Best'] = [res[0] for res in place_results]
-    compare_df['AFTER_placeInRating_Best'] = [res[1] for res in place_results]
-    compare_df['placeInRating_Compare_Best'] = [res[2] for res in place_results]
-    compare_df['placeInRating_Level'] = [res[3] for res in place_results]
+    place_results = compare_df.apply(lambda row: select_best_status_and_level(row, "placeInRating"), axis=1).tolist()
+    compare_df['BEFORE_placeInRating_Best'] = [res[0] if res and len(res) > 0 else None for res in place_results]
+    compare_df['AFTER_placeInRating_Best'] = [res[1] if res and len(res) > 1 else None for res in place_results]
+    compare_df['placeInRating_Compare_Best'] = [res[2] if res and len(res) > 2 else "Нет места" for res in place_results]
+    compare_df['placeInRating_Level'] = [res[3] if res and len(res) > 3 else "BANK" for res in place_results]
     
     # Для ratingCategoryName
-    category_results = compare_df.apply(lambda row: select_best_status_and_level(row, "ratingCategoryName"), axis=1)
-    compare_df['BEFORE_ratingCategoryName_Best'] = [res[0] for res in category_results]
-    compare_df['AFTER_ratingCategoryName_Best'] = [res[1] for res in category_results]
-    compare_df['ratingCategoryName_Compare_Best'] = [res[2] for res in category_results]
-    compare_df['ratingCategoryName_Level'] = [res[3] for res in category_results]
+    category_results = compare_df.apply(lambda row: select_best_status_and_level(row, "ratingCategoryName"), axis=1).tolist()
+    compare_df['BEFORE_ratingCategoryName_Best'] = [res[0] if res and len(res) > 0 else None for res in category_results]
+    compare_df['AFTER_ratingCategoryName_Best'] = [res[1] if res and len(res) > 1 else None for res in category_results]
+    compare_df['ratingCategoryName_Compare_Best'] = [res[2] if res and len(res) > 2 else "Нет призового значения" for res in category_results]
+    compare_df['ratingCategoryName_Level'] = [res[3] if res and len(res) > 3 else "BANK" for res in category_results]
     
     logging.info("Объединенные статусы сформированы")
 
