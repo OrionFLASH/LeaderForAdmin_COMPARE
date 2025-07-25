@@ -138,6 +138,17 @@
 * **Назначение:**
   Загружает и разбирает файл, корректно обрабатывает вложенные структуры, возвращает список словарей (для DataFrame).
 
+#### `filter_dataframe_by_tournaments(df, allowed_ids, filter_enabled, label="DataFrame")`
+
+* **Параметры:**
+
+  * `df`: DataFrame для фильтрации
+  * `allowed_ids`: список разрешенных tournament_ids  
+  * `filter_enabled`: флаг включения фильтрации
+  * `label`: метка для логирования
+* **Назначение:**
+  Фильтрует DataFrame по списку турниров в зависимости от параметров. Если фильтрация отключена или список турниров пустой, возвращает исходные данные.
+
 #### `make_compare_sheet(df_before, df_after, sheet_name)`
 
 * **Параметры:**
@@ -301,6 +312,7 @@
 * v1.6 — Улучшено условное форматирование итоговых колонок
 * v1.7 — Централизованные параметры, оптимизация конфигурирования
 * v1.8 — Расширение структуры данных, дополнительные тесты
+* v1.9 — Параметр фильтрации турниров в листах BEFORE/AFTER, функция filter_dataframe_by_tournaments
 
 ---
 
@@ -316,13 +328,48 @@ pip install pandas openpyxl
 
 ---
 
+## Настройка параметров
+
+Основные параметры конфигурации задаются в начале файла `Main.py`:
+
+### Фильтрация турниров
+
+* **`ALLOWED_TOURNAMENT_IDS`** — список ID турниров для анализа. Если пустой, анализируются все турниры из исходных файлов.
+
+* **`FILTER_TOURNAMENTS_IN_BEFORE_AFTER`** — управляет фильтрацией данных в листах BEFORE и AFTER:
+  - `True` — загружаются только турниры из `ALLOWED_TOURNAMENT_IDS`
+  - `False` — загружаются все турниры (по умолчанию)
+  - Если `ALLOWED_TOURNAMENT_IDS` пустой, загружаются все турниры независимо от этого параметра
+
+**Примеры использования:**
+
+```python
+# Загрузить все турниры в BEFORE/AFTER, но фильтровать только COMPARE/FINAL
+ALLOWED_TOURNAMENT_IDS = ["t_01_2025-2_08-2_6_2031", "t_01_2025-2_09-1_1_3071"]
+FILTER_TOURNAMENTS_IN_BEFORE_AFTER = False
+
+# Фильтровать все листы включая BEFORE/AFTER
+ALLOWED_TOURNAMENT_IDS = ["t_01_2025-2_08-2_6_2031", "t_01_2025-2_09-1_1_3071"] 
+FILTER_TOURNAMENTS_IN_BEFORE_AFTER = True
+
+# Загрузить все турниры везде
+ALLOWED_TOURNAMENT_IDS = []
+FILTER_TOURNAMENTS_IN_BEFORE_AFTER = False
+```
+
+### Другие параметры
+
+* **Пути к файлам:** `SOURCE_DIR`, `TARGET_DIR`, `LOG_DIR`
+* **Имена файлов:** `BEFORE_FILENAME`, `AFTER_FILENAME`, `RESULT_EXCEL`
+* **Логирование:** `LOG_LEVEL` (INFO или DEBUG)
+
+---
+
 ## Запуск
 
 ```bash
 python Main.py
 ```
-
-Все параметры настраиваются в начале скрипта.
 
 ---
 

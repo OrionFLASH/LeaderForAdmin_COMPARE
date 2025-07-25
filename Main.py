@@ -49,6 +49,12 @@ ALLOWED_TOURNAMENT_IDS = [
     "t_01_2025-1_04-1_1_4001"
 ]
 
+# --- Фильтрация турниров в листах BEFORE и AFTER ---
+# Если True, то на листы BEFORE и AFTER будут загружены только турниры из ALLOWED_TOURNAMENT_IDS
+# Если ALLOWED_TOURNAMENT_IDS пустой, то грузятся все турниры независимо от этого параметра
+# Если False, то всегда грузятся все турниры
+FILTER_TOURNAMENTS_IN_BEFORE_AFTER = False
+
 LOG_MESSAGES = {
     "LOGGER_SESSION_START": "\n-------- NEW LOG START AT {date} ({time}) -------\n",
     "LOGGER_ACTIVE_FILE": "Лог-файл активен (append): {path}",
@@ -653,6 +659,40 @@ def process_json_file(filepath):
                     filename=filename, tournament_key=tournament_key, ex=ex))
     return rows
 
+def filter_dataframe_by_tournaments(df, allowed_ids, filter_enabled, label="DataFrame"):
+    """
+    Фильтрует DataFrame по списку турниров в зависимости от параметров.
+    
+    Args:
+        df: DataFrame для фильтрации
+        allowed_ids: список разрешенных tournament_ids
+        filter_enabled: флаг включения фильтрации
+        label: метка для логирования
+    
+    Returns:
+        Отфильтрованный DataFrame
+    """
+    original_count = len(df)
+    
+    # Если фильтрация отключена, возвращаем без изменений
+    if not filter_enabled:
+        logging.info(f"[{label}] Фильтрация турниров отключена, загружено {original_count} строк")
+        return df
+    
+    # Если список турниров пустой, загружаем все
+    if not allowed_ids:
+        logging.info(f"[{label}] Список разрешенных турниров пустой, загружено {original_count} строк")
+        return df
+    
+    # Применяем фильтрацию
+    filtered_df = df[df['tournamentId'].isin(allowed_ids)]
+    filtered_count = len(filtered_df)
+    
+    logging.info(f"[{label}] Применена фильтрация по турнирам: {original_count} -> {filtered_count} строк")
+    logging.info(f"[{label}] Разрешенные турниры: {allowed_ids}")
+    
+    return filtered_df
+
 def make_compare_sheet(df_before, df_after, sheet_name):
     logging.info(LOG_MESSAGES["COMPARE_SHEET_START"])
 
@@ -1225,6 +1265,14 @@ def main():
     t_end_after = datetime.now()
     logger.info(LOG_MESSAGES["MAIN_AFTER_LOADED"].format(count=len(df_after), sheet=SHEET_NAMES['after']))
     log_data_stats(df_after, SHEET_NAMES['after'])
+
+    # --- Фильтрация турниров для листов BEFORE и AFTER (при необходимости) ---
+    df_before = filter_dataframe_by_tournaments(
+        df_before, ALLOWED_TOURNAMENT_IDS, FILTER_TOURNAMENTS_IN_BEFORE_AFTER, SHEET_NAMES['before']
+    )
+    df_after = filter_dataframe_by_tournaments(
+        df_after, ALLOWED_TOURNAMENT_IDS, FILTER_TOURNAMENTS_IN_BEFORE_AFTER, SHEET_NAMES['after']
+    )
 
     # --- Анализ турниров ---
     before_tids = set(df_before['tournamentId'].unique())
