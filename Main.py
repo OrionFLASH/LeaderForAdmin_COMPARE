@@ -23,26 +23,30 @@ TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XL
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 LOG_BASENAME = "LOG_INFO"
 BEFORE_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
-AFTER_FILENAME = "leadersForAdmin_ALL_20250721-210823.json"
+AFTER_FILENAME = "leadersForAdmin_ALL_20250725-135321.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
 # === Параметры справочников турниров и конкурсов ===
 CATALOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//CSV"
-TOURNAMENT_SCHEDULE_CSV = "TOURNAMENT-SCHEDULE (PROM) 2025-07-21 v0.csv"
-CONTEST_DATA_CSV = "CONTEST-DATA (PROM) 2025-07-14 v0.csv"
+TOURNAMENT_SCHEDULE_CSV = "TOURNAMENT-SCHEDULE (PROM) 2025-07-24 v3.csv"
+CONTEST_DATA_CSV = "CONTEST-DATA (PROM) 2025-07-24 v4.csv"
 
 
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-        "t_01_2025-0_10-1_1_1001", "t_01_2025-0_10-1_2_1001", "t_01_2025-0_10-1_3_1001", "t_01_2025-0_10-1_4_1001",
-        "t_01_2025-1_09-1_1_3061", "t_01_2025-2_09-1_1_3071", "t_01_2025-0_13-1_1_1001", "t_01_2025-0_13-1_2_1001",
-        "t_01_2025-0_13-1_3_1001", "t_01_2025-1_14-1_1_3061", "t_01_2025-2_14-1_1_3071", "t_01_2025-1_16-1_1_2021",
-        "t_01_2025-1_05-1_1_3061", "t_01_2025-1_01-7_1_4001", "t_01_2025-1_07-5_6_4001",
-        "t_01_2025-1_07-5_7_4001", "t_01_2025-0_10-3_1_1001", "t_01_2025-0_10-3_2_1001", "t_01_2025-0_10-3_3_1001",
-        "t_01_2025-1_02-3_1t_3051", "t_01_2025-1_02-3_1t_3061", "t_01_2025-1_05-1_2t_3031", "t_01_2025-1_05-1_2t_3041",
-        "t_01_2025-1_05-1_2t_3051", "t_01_2025-1_05-1_2t_3061", "t_01_2025-0_18-7_5_4001", "t_01_2025-0_13-1_4_1001",
-        "t_01_2025-0_13-1_5_1001", "t_01_2025-0_13-1_6_1001", "t_01_2025-1_04-1_1_4001"
-    # Если оставить пустым, то анализируются все турниры.
+    "t_01_2025-2_08-2_6_2031",
+    "t_01_2025-2_09-1_1_3071",
+    "t_01_2025-2_14-1_1_3071",
+    "t_01_2025-2_16-1_1_2031",
+    "t_01_2025-2_05-1_1_3071",
+    "t_01_2025-2_08-1_1_3071",
+    "t_01_2025-2_15-1_2_2031",
+    "t_01_2025-2_01-7_1_4001",
+    "t_01_2025-1_07-5_5_4001",
+    "t_01_2025-1_07-5_6_4001",
+    "t_01_2025-1_07-5_7_4001",
+    "t_01_2025-0_18-7_5_4001",
+    "t_01_2025-1_04-1_1_4001"
 ]
 
 LOG_MESSAGES = {
@@ -160,9 +164,7 @@ freeze_map = {
         "FINAL_PLACE":  "D2",
         "COMPARE":      "E2",  # Первая строка + 4 столбца
         "BEFORE":       "G2",  # Первая строка + 6 столбцов
-        "AFTER":        "G2",
-        "FINAL_RAW":    "D2",
-        "FINAL_PLACE_RAW": "D2"
+        "AFTER":        "G2"
 }
 
 # Поля, которые сравниваются между выгрузками
@@ -366,8 +368,6 @@ SHEET_NAMES = {
     "compare": "COMPARE",
     "final": "FINAL",
     "final_place": "FINAL_PLACE",
-    "final_raw": "FINAL_RAW",
-    "final_place_raw": "FINAL_PLACE_RAW",
     "status_legend": "STATUS_LEGEND",
 }
 
@@ -1318,9 +1318,6 @@ def main():
 
     t_beg_export = datetime.now()
     with pd.ExcelWriter(out_excel, engine='openpyxl') as writer:
-        # Контрольные листы (RAW)
-        export_and_log(writer, final_df, SHEET_NAMES['final_raw'], logger, freeze_map)
-        export_and_log(writer, final_place_df, SHEET_NAMES['final_place_raw'], logger, freeze_map)
         export_and_log(writer, df_before, SHEET_NAMES['before'], logger, freeze_map)
         export_and_log(writer, df_after, SHEET_NAMES['after'], logger, freeze_map)
 
