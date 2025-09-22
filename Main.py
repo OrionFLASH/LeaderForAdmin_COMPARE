@@ -803,7 +803,15 @@ def create_summary_row(row, tournament_name):
     Returns:
         str: итоговая строка
     """
-    tournament = tournament_name or "Неизвестный турнир"
+    # Очищаем название турнира - берем только часть до скобки с ID
+    if tournament_name and tournament_name != "Неизвестный турнир":
+        # Ищем скобку с ID и берем только часть до неё
+        if '(' in tournament_name:
+            tournament = tournament_name.split('(')[0].strip()
+        else:
+            tournament = tournament_name
+    else:
+        tournament = "Неизвестный турнир"
     
     # Получаем места и приводим к целым числам
     before_place_raw = row.get('BEFORE_divisionRatings_BANK_placeInRating', '')
@@ -830,7 +838,7 @@ def create_summary_row(row, tournament_name):
     
     return summary
 
-def make_compare_sheet(df_before, df_after, sheet_name):
+def make_compare_sheet(df_before, df_after, sheet_name, tid_to_fullname=None):
     logging.info(LOG_MESSAGES["COMPARE_SHEET_START"])
 
     join_keys = COMPARE_KEYS
@@ -980,6 +988,10 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         return False
 
     compare_df = compare_df[compare_df.apply(is_any_change, axis=1)].reset_index(drop=True)
+    
+    # Добавляем tournamentName если передан маппинг
+    if tid_to_fullname:
+        compare_df['tournamentName'] = compare_df['tournamentId'].map(tid_to_fullname)
     
     # Добавляем итоговую колонку с описанием изменений
     # Используем tournamentName напрямую из строки
@@ -1476,8 +1488,7 @@ def main():
 
     # --- Формируем COMPARE ---
     t_beg_compare = datetime.now()
-    compare_df, sheet_compare = make_compare_sheet(df_before, df_after, SHEET_NAMES['compare'])
-    compare_df['tournamentName'] = compare_df['tournamentId'].map(tid_to_fullname)
+    compare_df, sheet_compare = make_compare_sheet(df_before, df_after, SHEET_NAMES['compare'], tid_to_fullname)
     compare_df = format_compare_dataframe(compare_df, COMPARE_EXPORT_COLUMNS)
     t_end_compare = datetime.now()
     logger.info(LOG_MESSAGES["MAIN_COMPARE_DONE"].format(
