@@ -804,8 +804,22 @@ def create_summary_row(row, tournament_name):
         str: итоговая строка
     """
     tournament = tournament_name or "Неизвестный турнир"
-    before_place = row.get('BEFORE_divisionRatings_BANK_placeInRating', '')
-    after_place = row.get('AFTER_divisionRatings_BANK_placeInRating', '')
+    
+    # Получаем места и приводим к целым числам
+    before_place_raw = row.get('BEFORE_divisionRatings_BANK_placeInRating', '')
+    after_place_raw = row.get('AFTER_divisionRatings_BANK_placeInRating', '')
+    
+    # Преобразуем в целые числа, если возможно
+    try:
+        before_place = int(float(before_place_raw)) if pd.notnull(before_place_raw) and str(before_place_raw).strip() != '' else ''
+    except (ValueError, TypeError):
+        before_place = before_place_raw
+    
+    try:
+        after_place = int(float(after_place_raw)) if pd.notnull(after_place_raw) and str(after_place_raw).strip() != '' else ''
+    except (ValueError, TypeError):
+        after_place = after_place_raw
+    
     status_description = row.get('описание статуса награды подробное', '')
     
     # Формируем итоговую строку
@@ -968,14 +982,9 @@ def make_compare_sheet(df_before, df_after, sheet_name):
     compare_df = compare_df[compare_df.apply(is_any_change, axis=1)].reset_index(drop=True)
     
     # Добавляем итоговую колонку с описанием изменений
-    # Создаем маппинг tournamentId -> tournamentName для итоговой строки
-    tournament_name_map = {}
-    if 'tournamentName' in compare_df.columns:
-        tournament_name_map = compare_df.set_index('tournamentId')['tournamentName'].to_dict()
-    
+    # Используем tournamentName напрямую из строки
     def create_summary_for_row(row):
-        tournament_id = row.get('tournamentId', '')
-        tournament_name = tournament_name_map.get(tournament_id, tournament_id)
+        tournament_name = row.get('tournamentName', '')
         return create_summary_row(row, tournament_name)
     
     compare_df['Итого'] = compare_df.apply(create_summary_for_row, axis=1)
