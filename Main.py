@@ -22,31 +22,38 @@ SOURCE_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//JS
 TARGET_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//XLSX"
 LOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//LOGS"
 LOG_BASENAME = "LOG_INFO"
-BEFORE_FILENAME = "leadersForAdmin_ALL_20250714-093911.json"
-AFTER_FILENAME = "leadersForAdmin_ALL_20250725-174938.json"
+BEFORE_FILENAME = "leadersForAdmin_SIGMA_20250901-134037.json"
+AFTER_FILENAME = "leadersForAdmin_SIGMA_20250922-094911.json"
 RESULT_EXCEL = "LFA_COMPARE.xlsx"
 # === Параметры справочников турниров и конкурсов ===
 CATALOG_DIR = "//Users//orionflash//Desktop//MyProject//LeaderForAdmin_skript//CSV"
-TOURNAMENT_SCHEDULE_CSV = "TOURNAMENT-SCHEDULE (PROM) 2025-07-25 v6.csv"
-CONTEST_DATA_CSV = "CONTEST-DATA (PROM) 2025-07-24 v4.csv"
+TOURNAMENT_SCHEDULE_CSV = "TOURNAMENT-SCHEDULE (PROM) 2025-09-19 v2.csv"
+CONTEST_DATA_CSV = "CONTEST-DATA (PROM) 2025-09-19 v2.csv"
 
 
 # --- Список турниров, которые будут включены в анализ ---
 # Если список пустой, сравниваются все турниры из исходных файлов.
 ALLOWED_TOURNAMENT_IDS = [
-    "t_01_2025-2_08-2_6_2031",
-    "t_01_2025-2_09-1_1_3071",
-    "t_01_2025-2_14-1_1_3071",
+    "t_01_2025-2_09-1_1_3091",
+    "t_01_2025-2_14-1_1_3091",
     "t_01_2025-2_16-1_1_2031",
-    "t_01_2025-2_05-1_1_3071",
-    "t_01_2025-2_08-1_1_3071",
+    "t_01_2025-2_05-1_1_3091",
+    "t_01_2025-2_08-1_1_3091",
     "t_01_2025-2_15-1_2_2031",
     "t_01_2025-2_01-7_1_4001",
-    "t_01_2025-1_07-5_5_4001",
-    "t_01_2025-1_07-5_6_4001",
-    "t_01_2025-1_07-5_7_4001",
     "t_01_2025-0_18-7_5_4001",
-    "t_01_2025-1_04-1_1_4001"
+    "t_01_2025-1_04-1_1_4002",
+    "t_01_2025-2_07-2_1_2031",
+    "t_01_2025-2_10-1_6_2031",
+    "t_01_2025-0_10-5_1_4001",
+    "t_01_2025-0_10-5_2_4001",
+    "t_01_2025-0_10-5_3_4001",
+    "t_01_2025-0_10-5_4_4001",
+    "t_01_2025-0_10-5_5_4001",
+    "t_01_2025-0_10-5_6_4001",
+    "t_01_2025-0_10-5_7_4001",
+    "t_01_2025-0_10-5_8_4001",
+    "t_01_2025-0_10-5_9_4001"
 ]
 
 # --- Фильтрация турниров в листах BEFORE и AFTER ---
@@ -331,18 +338,18 @@ COMPARE_COLOR_COLUMNS = [
 # --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
 STATUS_LEGEND_FULL = [
     # --- FINAL: Категории ---
-    ("Новый призёр",                   "NewWinner",        "Участник впервые попал в призёры",                "#00B050", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
-    ("Поднялся в рейтинге призеров",   "UpInWinners",      "Улучшил место среди призёров",                    "#C6EFCE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
-    ("Стал призёром",                  "BecameWinner",     "Был без награды, попал в призёры",                "#00B0F0", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
-    ("Сохранил призовую позицию",      "KeptPlace",        "Остался на том же призовом месте",                "#D9EAD3", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 2"),
-    ("Снизил призовое место",           "DownInWinners",    "Место стал хуже среди призёров",                  "#FFC7CE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 3"),
-    ("Лишился награды",                "LostAward",        "Был призёром, стал без награды",                  "#FF0000", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 4"),
-    ("Удалённый призёр",               "RemovedWinner",    "Был призёром, но исчез из списка",                "#808080", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 4"),
-    ("Остался вне призеров",           "StayedNoAward",    "Был вне призёров и остался вне",                  "#BFBFBF", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
-    ("Новый участник без награды",     "NewNoAward",       "Появился впервые, но не стал призёром",           "#E2EFDA", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
-    ("Удалённый участник без награды", "RemovedNoAward",   "Был в прошлом, исчез, не был призёром",           "#808080", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
+    ("Новый призёр",                   "NewWinner",        "В текущем периоде стал участником турнира, попал в турнирную таблицу и сразу стал претендентом на победу",                "#00B050", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
+    ("Поднялся в рейтинге призеров",   "UpInWinners",      "Был и остался претендентом на победу, причем стал претендовать на награду большего достоинства",                    "#C6EFCE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
+    ("Стал призёром",                  "BecameWinner",     "По сравнению с прошлой выгрузкой данных поднялся в рейтинге и вошел в число претендентов на победу",                "#00B0F0", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
+    ("Сохранил призовую позицию",      "KeptPlace",        "Был и остался претендентом на победу в турнире",                "#D9EAD3", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 2"),
+    ("Снизил призовое место",          "DownInWinners",    "Снизился в рейтинге и стал претендовать на награду меньшего достоинства. НО при этом все еще претендент на победу",                  "#FFC7CE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 3"),
+    ("Лишился награды",                "LostAward",        "Снизился в рейтинге и выбыл из числа претендентов на победу",                  "#FF0000", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 4"),
+    ("Удалённый призёр",               "RemovedWinner",    "Выбыл из участников турнира",                "#808080", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 4"),
+    ("Остался вне призеров",           "StayedNoAward",    "Рейтинг изменился, но все еще не претендент на победу",                  "#BFBFBF", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
+    ("Новый участник без награды",     "NewNoAward",       "На текущей неделе стал участником турнира. Еще не претендент на победу",           "#E2EFDA", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
+    ("Удалённый участник без награды", "RemovedNoAward",   "Выбыл из участников турнира",           "#808080", "#FFFFFF", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 5"),
     ("Нет призового значения",         "NoPrizeRank",      "Был в выгрузках, но нет ранга/категории",         "#F5F5F5", "#C8C8C8", "FINAL", "-"),
-    ("Не участвовал",                  "NotParticipated",  "Отсутствует в обеих выгрузках",                   "#F5F5F5", "#C8C8C8", "FINAL, FINAL_PLACE", "Группа 6"),
+    ("Не участвовал",                  "NotParticipated",  "Не присутствует в турнире",                   "#F5F5F5", "#C8C8C8", "FINAL, FINAL_PLACE", "Группа 6"),
 
     # --- FINAL_PLACE: Места ---
     ("Улучшил место (BANK)",           "ImprovedPlace_BANK", "Место улучшилось по BANK",                       "#C6EFCE", "#000000", "FINAL_PLACE, divisionRatings_BANK_placeInRating_Compare", "-"),
