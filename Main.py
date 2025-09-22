@@ -131,7 +131,9 @@ LOG_MESSAGES = {
     "MAIN_COLORS_APPLIED": "[MAIN] Применена цветовая раскраска к {sheet}.",
     "MAIN_LEGEND_ADDED": "[MAIN] Добавлен лист с легендой статусов.",
     "MAIN_FINAL_SET_ACTIVE_SHEET_FAIL": "[MAIN] Не удалось установить лист {sheet} активным: {ex}",
-    "MAIN_TOURNAMENT_DESCRIPTIONS_LOADED": "[MAIN] Загружено описаний турниров: {count}"
+    "MAIN_TOURNAMENT_DESCRIPTIONS_LOADED": "[MAIN] Загружено описаний турниров: {count}",
+    "COMPARE_STATUS_DESCRIPTION_ADDED": "[COMPARE] Добавлены подробные описания статусов наград",
+    "COMPARE_SUMMARY_ADDED": "[COMPARE] Добавлены итоговые строки с описанием изменений"
 }
 
 # Шаблон итоговой строки
@@ -209,8 +211,10 @@ COMPARE_EXPORT_COLUMNS = [
     
     # Объединенные статусы категорий (лучший доступный уровень)  
     'BEFORE_ratingCategoryName_Best', 'AFTER_ratingCategoryName_Best', 'ratingCategoryName_Compare_Best', 'ratingCategoryName_Level',
+    'описание статуса награды подробное',  # подробное описание статуса категории
 
     # Исходные поля по уровням убраны, достаточно объединенных статусов
+    'Итого'  # итоговая строка с описанием
 ]
 
 # Поля, которые должны быть приведены к типу int
@@ -338,7 +342,6 @@ COMPARE_COLOR_COLUMNS = [
 # --- Справочник по статусам (Excel-код: (рус, комментарий)) ---
 STATUS_LEGEND_FULL = [
     # --- FINAL: Категории ---
-    ("Новый призёр",                   "NewWinner",        "В текущем периоде стал участником турнира, попал в турнирную таблицу и сразу стал претендентом на победу",                "#00B050", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
     ("Поднялся в рейтинге призеров",   "UpInWinners",      "Был и остался претендентом на победу, причем стал претендовать на награду большего достоинства",                    "#C6EFCE", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
     ("Стал призёром",                  "BecameWinner",     "По сравнению с прошлой выгрузкой данных поднялся в рейтинге и вошел в число претендентов на победу",                "#00B0F0", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 1"),
     ("Сохранил призовую позицию",      "KeptPlace",        "Был и остался претендентом на победу в турнире",                "#D9EAD3", "#000000", "FINAL, divisionRatings_*_ratingCategoryName_Compare", "Группа 2"),
@@ -769,6 +772,50 @@ def select_best_status_and_level(row, field_type="placeInRating"):
         level
     )
 
+def get_status_description(status):
+    """
+    Получает подробное описание статуса из STATUS_LEGEND_FULL.
+    
+    Args:
+        status: статус для поиска описания
+    
+    Returns:
+        str: подробное описание статуса или пустая строка
+    """
+    if not status or pd.isnull(status):
+        return ""
+    
+    status_str = str(status).strip()
+    for legend_item in STATUS_LEGEND_FULL:
+        if len(legend_item) >= 3 and legend_item[0] == status_str:
+            return legend_item[2]  # третий элемент - описание
+    
+    return ""
+
+def create_summary_row(row, tournament_name):
+    """
+    Создает итоговую строку с описанием изменений.
+    
+    Args:
+        row: строка DataFrame
+        tournament_name: название турнира
+    
+    Returns:
+        str: итоговая строка
+    """
+    tournament = tournament_name or "Неизвестный турнир"
+    before_place = row.get('BEFORE_divisionRatings_BANK_placeInRating', '')
+    after_place = row.get('AFTER_divisionRatings_BANK_placeInRating', '')
+    status_description = row.get('описание статуса награды подробное', '')
+    
+    # Формируем итоговую строку
+    summary = f"Турнир: {tournament}. "
+    summary += f"Рейтинг в турнире на прошлой неделе: {before_place} "
+    summary += f"Текущий рейтинг: {after_place} "
+    summary += f"{status_description};"
+    
+    return summary
+
 def make_compare_sheet(df_before, df_after, sheet_name):
     logging.info(LOG_MESSAGES["COMPARE_SHEET_START"])
 
@@ -890,11 +937,16 @@ def make_compare_sheet(df_before, df_after, sheet_name):
     
     logging.info("Объединенные статусы сформированы")
 
+    # Добавляем подробные описания статусов наград
+    compare_df['описание статуса награды подробное'] = compare_df['ratingCategoryName_Compare_Best'].apply(get_status_description)
+    logging.info(LOG_MESSAGES["COMPARE_STATUS_DESCRIPTION_ADDED"])
+
     final_cols = COMPARE_KEYS + COMPARE_STATUS_COLUMNS + ['BEFORE_' + c for c in COMPARE_FIELDS] + ['AFTER_' + c for c in COMPARE_FIELDS]
     # Добавляем новые колонки в final_cols
     final_cols += [
         'BEFORE_placeInRating_Best', 'AFTER_placeInRating_Best', 'placeInRating_Compare_Best', 'placeInRating_Level',
-        'BEFORE_ratingCategoryName_Best', 'AFTER_ratingCategoryName_Best', 'ratingCategoryName_Compare_Best', 'ratingCategoryName_Level'
+        'BEFORE_ratingCategoryName_Best', 'AFTER_ratingCategoryName_Best', 'ratingCategoryName_Compare_Best', 'ratingCategoryName_Level',
+        'описание статуса награды подробное'
     ]
     compare_df = compare_df.reindex(columns=final_cols)
 
@@ -914,6 +966,21 @@ def make_compare_sheet(df_before, df_after, sheet_name):
         return False
 
     compare_df = compare_df[compare_df.apply(is_any_change, axis=1)].reset_index(drop=True)
+    
+    # Добавляем итоговую колонку с описанием изменений
+    # Создаем маппинг tournamentId -> tournamentName для итоговой строки
+    tournament_name_map = {}
+    if 'tournamentName' in compare_df.columns:
+        tournament_name_map = compare_df.set_index('tournamentId')['tournamentName'].to_dict()
+    
+    def create_summary_for_row(row):
+        tournament_id = row.get('tournamentId', '')
+        tournament_name = tournament_name_map.get(tournament_id, tournament_id)
+        return create_summary_row(row, tournament_name)
+    
+    compare_df['Итого'] = compare_df.apply(create_summary_for_row, axis=1)
+    logging.info(LOG_MESSAGES["COMPARE_SUMMARY_ADDED"])
+    
     logging.info(LOG_MESSAGES["COMPARE_SHEET_FINAL"].format(count=len(compare_df)))
     return compare_df, sheet_name
 
